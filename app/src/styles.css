@@ -213,6 +213,10 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--barda-clara); o
   text-align: left; pointer-events: none;
 }
 
+/* Firma del autor, al lado de la fuente. */
+.autor { color: var(--tinta); text-decoration: underline; text-underline-offset: 2px; pointer-events: auto; }
+.autor:hover { color: var(--barda-clara); }
+
 /* El crédito del mapa base, discreto. */
 .maplibregl-ctrl-attrib { background: rgba(20, 26, 51, 0.6) !important; color: var(--tinta-suave) !important; }
 .maplibregl-ctrl-attrib a { color: var(--tinta-suave) !important; }
