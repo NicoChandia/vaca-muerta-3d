@@ -6,6 +6,7 @@ import { Estratos } from '../estratos';
 import { FichaPozo } from '../ficha-pozo';
 import { Buscador, Resultado } from '../buscador';
 import { TrayectoriasService } from '../trayectorias';
+import { Seo } from '../seo';
 
 const VELOCIDADES = [
   { etiqueta: '1×', ms: 260 },
@@ -52,6 +53,8 @@ export class Escena implements OnDestroy {
 
   constructor() {
     this.servicio.cargar();
+    const seo = inject(Seo);
+    effect(() => seo.aplicar(this.vista() === 'subsuelo' ? 'subsuelo' : 'produccion'));
     // Al llegar los datos, el mapa arranca en el último mes disponible.
     effect(() => {
       const d = this.datos();

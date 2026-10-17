@@ -13,8 +13,8 @@ function escena(segmentos: UrlSegment[]) {
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'produccion' },
-  { path: 'que-es', component: Recorrido, title: 'Qué es Vaca Muerta, en 6 pasos' },
+  { path: 'que-es', component: Recorrido },
   { matcher: escena, component: Escena },
-  { path: 'rendimiento', component: Rendimiento, title: 'Rendimiento de los pozos, Vaca Muerta' },
+  { path: 'rendimiento', component: Rendimiento },
   { path: '**', redirectTo: 'produccion' },
 ];

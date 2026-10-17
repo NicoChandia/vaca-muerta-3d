@@ -5,6 +5,7 @@ import { DatosService, formato } from '../datos';
 import { EXAGERACION_VERTICAL, Mapa3d, Vista } from '../mapa-3d';
 import { TrayectoriasService } from '../trayectorias';
 import { calcularRendimiento } from '../rendimiento-calculo';
+import { Seo } from '../seo';
 
 interface Paso {
   titulo: string;
@@ -39,6 +40,7 @@ export class Recorrido implements OnDestroy {
   private animacion?: ReturnType<typeof setInterval>;
 
   constructor() {
+    inject(Seo).aplicar('que-es');
     window.addEventListener('resize', this.alRedimensionar);
     this.servicio.cargar();
     effect(() => {

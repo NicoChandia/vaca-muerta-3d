@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vaca-muerta-3d.vercel.app/sitemap.xml

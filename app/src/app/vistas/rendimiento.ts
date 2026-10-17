@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DatosService, formato } from '../datos';
 import { AnioPerforacion, Fluido, calcularPerforacion, calcularRendimiento } from '../rendimiento-calculo';
 import { TrayectoriasService } from '../trayectorias';
+import { Seo } from '../seo';
 
 /** Rampa de un solo tono para los años: los más viejos tenues, los más nuevos brillantes. */
 const RAMPA_ANIOS = ['#2f4f86', '#3a68ad', '#4a84d4', '#73a6ea', '#a9cbf7'];
@@ -33,6 +34,7 @@ export class Rendimiento implements OnDestroy {
   private readonly trayectorias = inject(TrayectoriasService);
 
   constructor() {
+    inject(Seo).aplicar('rendimiento');
     this.servicio.cargar();
     effect(() => {
       const d = this.servicio.datos();
