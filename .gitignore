@@ -1,0 +1,6 @@
+datos/
+__pycache__/
+*.pyc
+# CSV originales: pesan cientos de MB y se bajan de datos.gob.ar
+extras/
+*.csv

@@ -1,0 +1,235 @@
+<main class="pagina">
+  <div class="columna" #columna>
+    @switch (servicio.estado()) {
+      @case ('cargando') {
+        <p class="cargando">Calculando…</p>
+      }
+      @case ('error') {
+        <p class="cargando">{{ servicio.error() }}</p>
+      }
+      @default {
+        @if (r(); as r) {
+          <header class="encabezado">
+            <h1>¿Los pozos nuevos rinden más?</h1>
+            <div class="grupo" role="group" aria-label="Qué analizar">
+              <button type="button" [attr.aria-pressed]="fluido() === 'petroleo'" (click)="fluido.set('petroleo')">Pozos de petróleo</button>
+              <button type="button" [attr.aria-pressed]="fluido() === 'gas'" (click)="fluido.set('gas')">Pozos de gas</button>
+            </div>
+            @if (titular(); as t) {
+              <p class="titular">
+                Un pozo {{ t.tipo }} típico que arrancó en {{ t.ultimo.anio }} produjo
+                <b>{{ primerAnio(t.ultimo.mediana) }}</b> en su primer año. Uno de {{ t.primero.anio }}, <b>{{ primerAnio(t.primero.mediana) }}</b>:
+                @if (t.veces >= 1.15) {
+                  los nuevos rinden {{ f.decimal(t.veces) }} veces más.
+                } @else if (t.veces <= 0.87) {
+                  los nuevos rinden menos.
+                } @else {
+                  casi lo mismo.
+                }
+              </p>
+            }
+            @if (titular()?.horizontal; as h) {
+              <p class="contexto">
+                Buena parte del salto se explica por el tipo de pozo: hasta {{ h.anio - 1 }} la mayoría eran verticales y
+                desde {{ h.anio }}, horizontales, con ramas de kilómetros dentro de la roca. Comparado solo con los de
+                {{ h.anio }}, un pozo de {{ titular()!.ultimo.anio }} rinde {{ f.decimal(titular()!.vecesHorizontal) }} veces más.
+              </p>
+            }
+            <p class="metodo">
+              "Típico" es la mediana: la mitad de los pozos produjo más y la otra mitad menos. Se analizan
+              {{ f.entero(r.pozosAnalizados) }} pozos con al menos un año de datos.
+            </p>
+          </header>
+
+          <section class="bloque" aria-labelledby="t-cohortes">
+            <h2 id="t-cohortes">Producción del primer año, según el año de arranque</h2>
+            <p class="eje">{{ unidadPrimerAnio() }}, por pozo</p>
+            @if (barras(); as b) {
+              <div class="grafico">
+                <svg [attr.viewBox]="'0 0 ' + ancho() + ' ' + alto" [attr.width]="ancho()" [attr.height]="alto" role="img"
+                  aria-label="Barras con la producción mediana del primer año por pozo para cada año de arranque."
+                  (pointerleave)="hover.set(null)">
+                  @for (t of b.ticks; track t.v) {
+                    <line [attr.x1]="margen.izq" [attr.x2]="ancho() - margen.der" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
+                    <text [attr.x]="margen.izq - 8" [attr.y]="t.y + 4" class="tick" text-anchor="end">{{ t.texto }}</text>
+                  }
+                  @for (x of b.barras; track x.c.anio) {
+                    <line [attr.x1]="x.cx" [attr.x2]="x.cx" [attr.y1]="x.y25" [attr.y2]="x.y75" class="rango" />
+                    <path [attr.d]="barra(x.x, x.y, x.ancho, x.alto)" class="barra" />
+                    @if (x.etiqueta) {
+                      <text [attr.x]="x.cx" [attr.y]="b.base + 18" class="tick" text-anchor="middle">{{ x.c.anio }}</text>
+                    }
+                    <rect [attr.x]="x.zona.x" y="0" [attr.width]="x.zona.ancho" [attr.height]="alto" fill="transparent"
+                      (pointerenter)="hoverBarra(x)" />
+                  }
+                  <line [attr.x1]="margen.izq" [attr.x2]="ancho() - margen.der" [attr.y1]="b.base" [attr.y2]="b.base" class="eje-base" />
+                </svg>
+                @if (hover(); as h) {
+                  @if (mesCurva() === null) {
+                    <div class="globo" [style.left.px]="h.x" [style.top.px]="h.y">
+                      <strong>{{ h.titulo }}</strong>
+                      @for (l of h.lineas; track l) { <span>{{ l }}</span> }
+                    </div>
+                  }
+                }
+              </div>
+              <p class="nota">La barra es la mediana; la línea fina va del cuartil 1 al 3, donde está la mitad de los pozos.</p>
+            }
+          </section>
+
+          <section class="bloque" aria-labelledby="t-curvas">
+            <h2 id="t-curvas">Cómo cae la producción desde el arranque</h2>
+            <p class="eje">{{ unidadCaudal() }}, pozo típico</p>
+            @if (curvas(); as c) {
+              <div class="grafico">
+                <svg [attr.viewBox]="'0 0 ' + ancho() + ' ' + altoCurva" [attr.width]="ancho()" [attr.height]="altoCurva" role="img"
+                  aria-label="Curvas de producción por mes desde el arranque, para pozos de distintos años."
+                  (pointermove)="moverCurva($event)" (pointerleave)="salirCurva()">
+                  @for (t of c.ticksY; track t.v) {
+                    <line [attr.x1]="margen.izq" [attr.x2]="c.derecha" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
+                    <text [attr.x]="margen.izq - 8" [attr.y]="t.y + 4" class="tick" text-anchor="end">{{ t.texto }}</text>
+                  }
+                  @for (t of c.ticksX; track t.k) {
+                    <text [attr.x]="t.x" [attr.y]="c.base + 18" class="tick" text-anchor="middle">{{ t.k === 0 ? 'Mes 1' : t.k + 1 }}</text>
+                  }
+                  <line [attr.x1]="margen.izq" [attr.x2]="c.derecha" [attr.y1]="c.base" [attr.y2]="c.base" class="eje-base" />
+                  @if (mesCurva() !== null) {
+                    <line [attr.x1]="c.x(mesCurva()!)" [attr.x2]="c.x(mesCurva()!)" [attr.y1]="margen.arriba" [attr.y2]="c.base" class="cruz" />
+                  }
+                  @for (l of c.lineas; track l.anio) {
+                    <path [attr.d]="l.path" [attr.stroke]="l.color" class="curva" />
+                    @if (mesCurva() !== null && l.valores[mesCurva()!] !== null) {
+                      <circle [attr.cx]="c.x(mesCurva()!)" [attr.cy]="punto(l.valores[mesCurva()!]!)" r="4" [attr.fill]="l.color" class="marcador" />
+                    }
+                  }
+                  @for (e of c.etiquetas; track e.anio) {
+                    <text [attr.x]="e.x" [attr.y]="e.y + 4" class="etiqueta">{{ e.anio }}</text>
+                  }
+                </svg>
+                @if (hover(); as h) {
+                  @if (mesCurva() !== null) {
+                    <div class="globo" [style.left.px]="h.x" [style.top.px]="h.y">
+                      <strong>{{ h.titulo }}</strong>
+                      @for (l of h.lineas; track l) { <span>{{ l }}</span> }
+                    </div>
+                  }
+                }
+              </div>
+              <p class="leyenda">
+                @for (l of c.lineas; track l.anio) {
+                  <span><i [style.background]="l.color" aria-hidden="true"></i>Arrancaron en {{ l.anio }}</span>
+                }
+              </p>
+            }
+          </section>
+
+          <section class="bloque" aria-labelledby="t-pozos">
+            <h2 id="t-pozos">Pozos cada vez más largos</h2>
+            @if (cambioPozos(); as c) {
+              <p class="bajada">
+                La rama horizontal típica pasó de {{ f.entero(c.a0.rama!) }} m en {{ c.a0.anio }} a
+                {{ f.entero(c.a1.rama!) }} m en {{ c.a1.anio }}, {{ f.decimal(c.cambioRama) }} veces más larga.
+                @if (c.diasParecidos) {
+                  El tiempo de perforación no creció en la misma proporción: varió entre {{ f.entero(c.diasMin) }} y
+                  {{ f.entero(c.diasMax) }} días según el año, y en {{ c.a1.anio }} fue de {{ f.entero(c.a1.dias!) }}, casi
+                  lo mismo que en {{ c.a0.anio }}.
+                } @else {
+                  El tiempo de perforación pasó de {{ f.entero(c.a0.dias!) }} a {{ f.entero(c.a1.dias!) }} días.
+                }
+                Más metros de roca en contacto con el pozo es una de las razones por las que cada pozo rinde más.
+              </p>
+            }
+            <div class="mini">
+              @for (serie of ['rama', 'dias']; track serie) {
+                @if (mini($any(serie)); as g) {
+                  <figure class="grafico">
+                    <figcaption>{{ serie === 'rama' ? 'Largo de la rama horizontal, metros' : 'Días de perforación' }}</figcaption>
+                    <svg [attr.viewBox]="'0 0 ' + anchoMini() + ' ' + altoMini" [attr.width]="anchoMini()" [attr.height]="altoMini" role="img"
+                      [attr.aria-label]="serie === 'rama' ? 'Barras con el largo típico de la rama horizontal por año' : 'Barras con los días típicos de perforación por año'"
+                      (pointerleave)="hoverMini.set(null)">
+                      @for (t of g.ticks; track t.v) {
+                        <line [attr.x1]="g.izq" [attr.x2]="g.der" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
+                        <text [attr.x]="g.izq - 6" [attr.y]="t.y + 4" class="tick" text-anchor="end">{{ t.texto }}</text>
+                      }
+                      @for (b of g.barras; track b.a.anio) {
+                        <path [attr.d]="barra(b.x, b.y, b.ancho, b.alto)" [class]="serie === 'rama' ? 'barra' : 'barra secundaria'" />
+                        @if (b.etiqueta) {
+                          <text [attr.x]="b.cx" [attr.y]="g.base + 17" class="tick" text-anchor="middle">{{ b.a.anio }}</text>
+                        }
+                        <rect [attr.x]="b.zona.x" y="0" [attr.width]="b.zona.ancho" [attr.height]="altoMini" fill="transparent"
+                          (pointerenter)="marcarMini($any(serie), b)" />
+                      }
+                      <line [attr.x1]="g.izq" [attr.x2]="g.der" [attr.y1]="g.base" [attr.y2]="g.base" class="eje-base" />
+                    </svg>
+                    @if (hoverMini(); as h) {
+                      @if (h.serie === serie) {
+                        <div class="globo" [style.left.px]="h.x" [style.top.px]="h.y + 24">
+                          <strong>{{ h.titulo }}</strong>
+                          @for (l of h.lineas; track l) { <span>{{ l }}</span> }
+                        </div>
+                      }
+                    }
+                  </figure>
+                }
+              }
+            </div>
+            <p class="nota">
+              Pozos horizontales, según el año en que empezó su perforación. Los días son de calendario entre el inicio y el
+              fin declarados: en una misma locación se perforan varios pozos por etapas, así que no equivalen al tiempo real del
+              equipo. La rama sale de las trayectorias publicadas.
+            </p>
+          </section>
+
+          <section class="bloque" aria-labelledby="t-empresas">
+            <h2 id="t-empresas">Por empresa, pozos que arrancaron entre {{ r.aniosEmpresas[0] }} y {{ r.aniosEmpresas[1] }}</h2>
+            <p class="eje">{{ unidadPrimerAnio() }}, pozo típico</p>
+            @if (empresas().length) {
+              <ol class="empresas">
+                @for (e of empresas(); track e.empresa) {
+                  <li>
+                    <span class="fila">
+                      <span>{{ e.nombre }}</span>
+                      <span class="valor">{{ primerAnio(e.mediana) }}</span>
+                    </span>
+                    <span class="barra-h" aria-hidden="true"><span [style.width.%]="e.ancho" [style.background]="e.color"></span></span>
+                    <span class="nota">{{ f.entero(e.n) }} pozos</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="nota">No hay empresas con suficientes pozos en ese período.</p>
+            }
+          </section>
+
+          <section class="bloque" aria-labelledby="t-destacados">
+            <h2 id="t-destacados">Los pozos que más produjeron en su primer año</h2>
+            <ol class="destacados">
+              @for (p of r.destacados; track p.id; let i = $index) {
+                <li>
+                  <a [routerLink]="['/produccion']" [queryParams]="{ pozo: p.id }">
+                    <span class="puesto">{{ i + 1 }}</span>
+                    <span class="nombre">
+                      <strong>{{ p.nombre }}</strong>
+                      <span>{{ p.empresa }}, {{ p.area }}, arrancó en {{ p.anio }}</span>
+                    </span>
+                    <span class="valor">{{ primerAnio(p.primerAnio) }}</span>
+                  </a>
+                </li>
+              }
+            </ol>
+            <p class="nota">Tocá un pozo para verlo en el mapa.</p>
+          </section>
+
+          <footer class="pie">
+            <p>
+              Producción del primer año: suma de los primeros doce meses desde que el pozo empezó a producir. Los pozos de
+              petróleo y de gas se separan según el tipo declarado. No se ajusta por largo de rama ni por cantidad de
+              etapas de fractura, que también explican parte de la diferencia.
+            </p>
+            <p>Fuente: {{ servicio.datos()?.meta?.fuente }}</p>
+          </footer>
+        }
+      }
+    }
+  </div>
+</main>

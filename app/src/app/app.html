@@ -1,0 +1,178 @@
+@switch (servicio.estado()) {
+  @case ('cargando') {
+    <main class="estado" aria-busy="true">
+      <p class="estado-titulo">Cargando pozos…</p>
+    </main>
+  }
+  @case ('error') {
+    <main class="estado">
+      <h1 class="estado-titulo">No se pudieron cargar los datos</h1>
+      <p>{{ servicio.error() }}</p>
+      <p class="estado-ayuda">
+        Para datos de ejemplo: <code>python pipeline/generar_ejemplo.py</code><br />
+        Para datos oficiales: <code>python pipeline/procesar_capitulo_iv.py datos/*.csv</code>
+      </p>
+    </main>
+  }
+  @case ('listo') {
+    @if (datos(); as d) {
+      <main class="escena">
+        <vm-mapa-3d
+          [datos]="d"
+          [mes]="mes()"
+          [medida]="medida()"
+          [modo]="modo()"
+          [colorPor]="colorPor()"
+          [empresaResaltada]="empresaResaltada()"
+          [seleccionado]="seleccionado()"
+          [descripcion]="descripcionMapa()"
+          [conNombres]="conNombres()"
+          (elegirPozo)="seleccionado.set($event)"
+        />
+
+        <div class="hud">
+          <header class="titulo panel">
+            <h1>Vaca Muerta, pozo&nbsp;por&nbsp;pozo</h1>
+            <p>Cada columna es un pozo. Su altura es lo que produjo en el mes.</p>
+            @if (d.meta.esEjemplo) {
+              <p class="aviso" role="note">
+                Datos de ejemplo: empresas, áreas y caudales inventados para probar la app.
+              </p>
+            }
+          </header>
+
+          <section class="controles panel" aria-label="Opciones del mapa">
+            <div class="grupo" role="group" aria-label="Qué medir">
+              <button type="button" [attr.aria-pressed]="medida() === 'petroleo'" (click)="medida.set('petroleo')">Petróleo</button>
+              <button type="button" [attr.aria-pressed]="medida() === 'gas'" (click)="medida.set('gas')">Gas</button>
+            </div>
+            <div class="grupo" role="group" aria-label="Cómo mostrar">
+              <button type="button" [attr.aria-pressed]="modo() === 'columnas'" (click)="modo.set('columnas')">Pozos</button>
+              <button type="button" [attr.aria-pressed]="modo() === 'hexagonos'" (click)="modo.set('hexagonos')">Zonas</button>
+            </div>
+            <div class="grupo" role="group" aria-label="Color de los pozos" [class.inactivo]="modo() === 'hexagonos'">
+              <button type="button" [attr.aria-pressed]="colorPor() === 'empresa'" (click)="colorPor.set('empresa')" [disabled]="modo() === 'hexagonos'">Por empresa</button>
+              <button type="button" [attr.aria-pressed]="colorPor() === 'tipo'" (click)="colorPor.set('tipo')" [disabled]="modo() === 'hexagonos'">Por tipo</button>
+            </div>
+            <button type="button" class="nombres" [attr.aria-pressed]="conNombres()" (click)="conNombres.set(!conNombres())">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.4" fill="currentColor"/></svg>
+              Ciudades y provincias
+            </button>
+            <button type="button" class="icono" (click)="recentrar()" aria-label="Volver a la vista inicial" title="Volver a la vista inicial">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </section>
+
+          @if (indicadores(); as i) {
+            <section class="momento" aria-live="polite" aria-label="Indicadores del mes">
+              <p class="fecha">
+                <span class="fecha-mes">{{ nombreDelMes() }}</span>
+                <span class="fecha-anio">{{ anio() }}</span>
+              </p>
+              <dl class="cifras">
+                <div [class.apagada]="medida() !== 'petroleo'">
+                  <dt>Petróleo</dt>
+                  <dd>
+                    <span class="numero">{{ f.entero(i.petroleo) }}</span>
+                    <span class="unidad">barriles por día</span>
+                    @if (i.petroleoVar !== null) {
+                      <span class="variacion">{{ f.variacion(i.petroleoVar) }} en un año</span>
+                    }
+                  </dd>
+                </div>
+                <div [class.apagada]="medida() !== 'gas'">
+                  <dt>Gas</dt>
+                  <dd>
+                    <span class="numero">{{ f.gasMillones(i.gas) }}</span>
+                    <span class="unidad">millones de m³ por día</span>
+                    @if (i.gasVar !== null) {
+                      <span class="variacion">{{ f.variacion(i.gasVar) }} en un año</span>
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Pozos produciendo</dt>
+                  <dd><span class="numero chico">{{ f.entero(i.activos) }}</span></dd>
+                </div>
+                <div>
+                  <dt>Pozos nuevos</dt>
+                  <dd>
+                    <span class="numero chico">{{ f.entero(i.conectados) }}</span>
+                    <span class="unidad">en el mes, {{ f.entero(i.conectados12) }} en 12 meses</span>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          }
+
+          <aside class="lateral panel" [attr.aria-label]="seleccionado() !== null ? 'Ficha del pozo' : 'Empresas'">
+            @if (seleccionado() !== null) {
+              <vm-ficha-pozo
+                [datos]="d"
+                [indice]="seleccionado()!"
+                [mes]="mes()"
+                [medida]="medida()"
+                (cerrar)="seleccionado.set(null)"
+              />
+            } @else {
+              <h2>Quién produce más</h2>
+              <p class="nota">{{ medida() === 'petroleo' ? 'Petróleo' : 'Gas' }} en {{ textoMes() }}. Tocá una empresa para ver solo sus pozos.</p>
+              <ol class="ranking">
+                @for (r of ranking(); track r.indice) {
+                  <li>
+                    <button
+                      type="button"
+                      [attr.aria-pressed]="empresaResaltada() === r.indice"
+                      [class.atenuada]="empresaResaltada() !== null && empresaResaltada() !== r.indice"
+                      (click)="resaltar(r.indice)"
+                    >
+                      <span class="fila">
+                        <span class="nombre">{{ r.nombre }}</span>
+                        <span class="valor">{{ valorRanking(r.valor) }}</span>
+                      </span>
+                      <span class="barra" aria-hidden="true">
+                        <span [style.width.%]="r.ancho" [style.background]="r.color"></span>
+                      </span>
+                      <span class="participacion">{{ f.decimal(r.participacion) }}% del total</span>
+                    </button>
+                  </li>
+                }
+              </ol>
+            }
+          </aside>
+
+          <footer class="linea-tiempo panel">
+            <div class="reproductor">
+              <button type="button" class="play" (click)="alternarReproduccion()" [attr.aria-label]="reproduciendo() ? 'Pausar la línea de tiempo' : 'Reproducir la línea de tiempo'">
+                @if (reproduciendo()) {
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></svg>
+                }
+              </button>
+              <button type="button" class="velocidad" (click)="cambiarVelocidad()" [attr.aria-label]="'Velocidad ' + velocidades[velocidad()].etiqueta">
+                {{ velocidades[velocidad()].etiqueta }}
+              </button>
+            </div>
+            <div class="estratos">
+              <vm-estratos
+                [datos]="d"
+                [mes]="mes()"
+                [medida]="medida()"
+                [empresaResaltada]="empresaResaltada()"
+                (cambiarMes)="irAMes($event)"
+              />
+              <p class="leyenda">
+                @for (e of d.meta.empresas; track e.nombre) {
+                  <span><i [style.background]="e.color" aria-hidden="true"></i>{{ e.nombre }}</span>
+                }
+              </p>
+            </div>
+          </footer>
+
+          <p class="fuente">Fuente: {{ d.meta.fuente }}</p>
+        </div>
+      </main>
+    }
+  }
+}

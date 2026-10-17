@@ -1,0 +1,42 @@
+[
+  {
+    "mes": "2011-05",
+    "titulo": "Primer anuncio de shale oil",
+    "texto": "YPF anuncia el descubrimiento de petróleo no convencional en Vaca Muerta, en el área Loma La Lata."
+  },
+  {
+    "mes": "2012-05",
+    "titulo": "El Estado toma el control de YPF",
+    "texto": "La ley 26.741 declara de utilidad pública el 51% de las acciones de YPF."
+  },
+  {
+    "mes": "2013-07",
+    "titulo": "Acuerdo YPF-Chevron",
+    "texto": "YPF y Chevron firman el acuerdo para desarrollar Loma Campana, el primer proyecto masivo de shale en Vaca Muerta."
+  },
+  {
+    "mes": "2017-03",
+    "titulo": "Estímulo al gas no convencional",
+    "texto": "La resolución 46/2017 fija un precio garantizado para el gas de nuevos proyectos no convencionales. Detrás llega el despegue de Fortín de Piedra."
+  },
+  {
+    "mes": "2019-08",
+    "titulo": "Congelamiento de precios",
+    "texto": "El decreto 566/2019 congela el precio del crudo y los combustibles por 90 días."
+  },
+  {
+    "mes": "2020-04",
+    "titulo": "Pandemia",
+    "texto": "Con la cuarentena y la caída de la demanda, se frena la actividad y la producción baja."
+  },
+  {
+    "mes": "2023-07",
+    "titulo": "Gasoducto desde Tratayén",
+    "texto": "Se inaugura el primer tramo del gasoducto que lleva gas de Vaca Muerta hacia Buenos Aires."
+  },
+  {
+    "mes": "2024-07",
+    "titulo": "Ley Bases y RIGI",
+    "texto": "Se promulga la ley 27.742, que crea un régimen de incentivo para grandes inversiones."
+  }
+]

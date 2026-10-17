@@ -1,0 +1,115 @@
+@if (servicio.datos(); as d) {
+  <main class="recorrido">
+    <vm-mapa-3d
+      [datos]="d"
+      [mes]="mes()"
+      [vista]="actual().vista"
+      [trayectorias]="trayectorias.datos()"
+      [seleccionado]="seleccionado()"
+      [camara]="camara()"
+      colorUnico="#8ec1ff"
+      [aislado]="paso() === 1 || paso() === 2"
+      [etapas]="paso() === 2"
+      [descripcion]="actual().titulo"
+    />
+
+    <section class="tarjeta" aria-live="polite" [attr.aria-label]="'Paso ' + (paso() + 1) + ' de ' + pasos.length">
+      <p class="contador">{{ paso() + 1 }} de {{ pasos.length }}</p>
+      <h1>{{ actual().titulo }}</h1>
+
+      @switch (paso()) {
+        @case (0) {
+          <p>
+            Vaca Muerta es una capa de roca que se formó en el fondo de un mar hace unos 150 millones de años. Ocupa unos
+            30.000 km², sobre todo en Neuquén, y está a unos
+            <b>{{ f.entero(trayectorias.datos()?.profundidadPromedio ?? 2900) }} metros</b> de profundidad.
+          </p>
+          <p>
+            El petróleo y el gas están atrapados en poros diminutos de esa roca. Por eso se la llama "no convencional": no
+            alcanza con hacer un pozo, hay que abrirle camino al petróleo. En el mapa, la capa clara es la formación, con
+            los pozos que llegan hasta ella.
+          </p>
+          <p class="nota-paso">
+            ¿Y el nombre? Viene de la sierra de la Vaca Muerta, cerca de Zapala, donde el geólogo Charles Weaver la
+            describió en 1931. En geología, cada formación lleva el nombre del lugar donde se la encontró.
+          </p>
+        }
+        @case (1) {
+          <p>
+            Cada pozo baja en vertical hasta la formación y ahí dobla para correr en horizontal dentro de la roca. Así toca
+            mucha más roca que un pozo vertical.
+          </p>
+          @if (pozoEjemplo(); as e) {
+            <p>
+              El pozo resaltado, <b>{{ e.tr.nombre }}</b>, recorre <b>{{ f.entero(e.tr.rama) }} metros</b> en horizontal. La
+              rama típica de Vaca Muerta mide {{ f.entero(trayectorias.datos()?.ramaPromedio ?? 0) }} m, y la más larga
+              publicada, {{ f.entero(trayectorias.datos()?.ramaMaxima ?? 0) }} m.
+            </p>
+          }
+        }
+        @case (2) {
+          <p>
+            Con la rama terminada, se bombea agua con arena a muy alta presión, tramo por tramo. Cada tramo es una
+            <b>etapa de fractura</b>: la roca se fisura y la arena mantiene abiertas las grietas para que el petróleo y el gas
+            puedan fluir hacia el pozo.
+          </p>
+          <p>Más rama y más etapas significan más roca conectada al pozo.</p>
+          <p class="nota-paso">Los puntos sobre la rama ilustran las etapas, separadas unos 70 m como es habitual.</p>
+        }
+        @case (3) {
+          @if (declino(); as c) {
+            <p>
+              Un pozo de shale da lo mejor apenas arranca y cae rápido. Uno típico de {{ c.anio }} empezó produciendo unos
+              <b>{{ f.entero(c.pico) }} barriles por día</b> y al año daba <b>{{ f.entero(c.alAnio) }}</b>: un
+              {{ f.entero(c.caida) }}% menos.
+            </p>
+            <svg class="curva" viewBox="0 0 300 100" role="img" [attr.aria-label]="'Curva de producción de un pozo típico de ' + c.anio + ' en sus primeros dos años'">
+              <line x1="0" x2="300" y1="97" y2="97" class="eje" />
+              <path [attr.d]="c.path" class="linea" />
+              <line x1="143.5" x2="143.5" y1="4" y2="97" class="marca" />
+              <text x="148" y="14" class="texto">al año</text>
+            </svg>
+          }
+        }
+        @case (4) {
+          @if (renovacion(); as r) {
+            <p>
+              Como cada pozo decae, para que la producción crezca hay que conectar pozos nuevos todo el tiempo. Hoy,
+              <b>{{ f.entero(r.porcentaje) }}% del petróleo</b> sale de pozos que tienen menos de dos años.
+            </p>
+          }
+          <p>En el mapa, la línea de tiempo corre desde 2011: mirá cómo se enciende la cuenca.</p>
+        }
+        @case (5) {
+          <p>Con esto alcanza para recorrer los datos por tu cuenta:</p>
+          <ul class="destinos">
+            <li><a routerLink="/produccion">Producción</a>: cuánto produce cada pozo, mes a mes desde 2011.</li>
+            <li><a routerLink="/subsuelo">Subsuelo</a>: los {{ f.entero(trayectorias.datos()?.cantidad ?? 0) }} pozos bajo tierra.</li>
+            <li><a routerLink="/rendimiento">Rendimiento</a>: por qué cada pozo nuevo rinde más.</li>
+          </ul>
+        }
+      }
+
+      <nav class="botones" aria-label="Pasos del recorrido">
+        <button type="button" class="secundario" (click)="ir(paso() - 1)" [disabled]="paso() === 0">Anterior</button>
+        <span class="puntos" aria-hidden="true">
+          @for (p of pasos; track p.titulo; let i = $index) {
+            <i [class.activo]="i === paso()"></i>
+          }
+        </span>
+        @if (paso() < pasos.length - 1) {
+          <button type="button" class="primario" (click)="ir(paso() + 1)">Siguiente</button>
+        } @else {
+          <a class="primario" routerLink="/produccion">Ir al mapa</a>
+        }
+      </nav>
+      @if (paso() < pasos.length - 1) {
+        <a class="saltar" routerLink="/produccion">Saltar e ir al mapa</a>
+      }
+    </section>
+
+    <p class="fuente">Fuente: {{ d.meta.fuente }}. Trayectorias con profundidad reconstruida y exagerada 4 veces.</p>
+  </main>
+} @else {
+  <main class="estado"><p class="estado-titulo">Cargando…</p></main>
+}
