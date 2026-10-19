@@ -88,6 +88,11 @@ const LIMITES = { minZoom: 6.3, maxZoom: 14.5, maxPitch: 85 };
 /** Hasta dónde se puede arrastrar el mapa: la cuenca y alrededores, para no perder los pozos. */
 const AREA_PERMITIDA = { oeste: -69.2, este: -68.35, sur: -38.75, norte: -37.95 };
 const acotar = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+/**
+ * Densidad de píxeles a dibujar. Los celulares tienen pantallas de 2x o 3x: dibujar a 3x
+ * es 9 veces más trabajo para la placa de video. A 1,5x se ve igual de nítido y anda fluido.
+ */
+const DENSIDAD = Math.min(window.devicePixelRatio || 1, 1.5);
 // Ciudades de referencia en la superficie.
 const CIUDADES = [
   { nombre: 'Añelo', lon: -68.788, lat: -38.355 },
@@ -138,6 +143,11 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
   readonly aislado = input(false);
   /** Marca etapas de fractura ilustrativas sobre la rama del pozo elegido. */
   readonly etapas = input(false);
+  /**
+   * Píxeles tapados arriba y abajo por otros elementos (en el celular, el menú y la tarjeta del
+   * recorrido). La cámara centra lo que mira en el espacio libre que queda entre ambos.
+   */
+  readonly margen = input<{ arriba: number; abajo: number } | null>(null);
   readonly elegirPozo = output<number | null>();
 
   private readonly base = viewChild.required<ElementRef<HTMLDivElement>>('base');
@@ -182,6 +192,12 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
         },
       });
     });
+    // Si cambia el espacio libre, la vista y el mapa base se ajustan juntos.
+    effect(() => {
+      const m = this.margen();
+      this.deck?.setProps({ views: this.vista3d() });
+      this.mapa?.setPadding({ top: m?.arriba ?? 0, bottom: m?.abajo ?? 0, left: 0, right: 0 });
+    });
     // Cambia el mapa base cuando se activan o desactivan los nombres de lugares.
     effect(() => {
       const nombres = this.conNombres();
@@ -211,6 +227,7 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
         pitch: (this.vista() === 'subsuelo' ? VISTA_SUBSUELO : inicial).pitch,
         bearing: (this.vista() === 'subsuelo' ? VISTA_SUBSUELO : inicial).bearing,
         interactive: false,
+        pixelRatio: DENSIDAD,
         attributionControl: { compact: true },
         maxPitch: 85,
         transformRequest: (url) => conClave(url),
@@ -225,15 +242,21 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
     this.deck = new Deck({
       parent: this.lienzo().nativeElement,
       // Plano lejano más amplio para que lo que está bajo tierra no se recorte.
-      views: new MapView({ farZMultiplier: 6, nearZMultiplier: 0.05 }),
+      views: this.vista3d(),
+      useDevicePixels: DENSIDAD,
       initialViewState: { ...arranque, ...LIMITES },
       controller: { dragRotate: true, touchRotate: true, keyboard: true },
-      onViewStateChange: ({ viewState }) => {
-        const v = {
-          ...(viewState as unknown as MapViewState),
-          longitude: acotar(viewState.longitude, AREA_PERMITIDA.oeste, AREA_PERMITIDA.este),
-          latitude: acotar(viewState.latitude, AREA_PERMITIDA.sur, AREA_PERMITIDA.norte),
-        };
+      onViewStateChange: ({ viewState, interactionState }) => {
+        // El límite de arrastre es para la persona; los vuelos de cámara guiados (el recorrido)
+        // pueden necesitar ubicarse un poco afuera para encuadrar la escena.
+        const guiado = interactionState?.inTransition && !interactionState.isDragging;
+        const v = guiado
+          ? (viewState as unknown as MapViewState)
+          : {
+              ...(viewState as unknown as MapViewState),
+              longitude: acotar(viewState.longitude, AREA_PERMITIDA.oeste, AREA_PERMITIDA.este),
+              latitude: acotar(viewState.latitude, AREA_PERMITIDA.sur, AREA_PERMITIDA.norte),
+            };
         this.mapa?.jumpTo({
           center: [v.longitude, v.latitude],
           zoom: v.zoom,
@@ -736,6 +759,16 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
       );
     }
     return capas;
+  }
+
+  private vista3d(): MapView {
+    const m = this.margen();
+    // Plano lejano más amplio para que lo que está bajo tierra no se recorte.
+    return new MapView({
+      farZMultiplier: 6,
+      nearZMultiplier: 0.05,
+      ...(m ? { padding: { top: m.arriba, bottom: m.abajo } } : {}),
+    });
   }
 
   private tooltip(info: PickingInfo): { html: string; style: Record<string, string> } | null {

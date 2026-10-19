@@ -135,7 +135,19 @@ export class Recorrido implements OnDestroy {
 
   /** Ancho de la ventana, para correr el encuadre fuera de la tarjeta. */
   private readonly anchoVentana = signal(window.innerWidth);
-  private readonly alRedimensionar = () => this.anchoVentana.set(window.innerWidth);
+  private readonly altoVentana = signal(window.innerHeight);
+  private readonly alRedimensionar = () => {
+    this.anchoVentana.set(window.innerWidth);
+    this.altoVentana.set(window.innerHeight);
+  };
+
+  /** En el celular, lo que tapan el menú (arriba) y la tarjeta con el pie (abajo). */
+  protected readonly margen = computed(() =>
+    // Se usa el alto máximo de la tarjeta (52% de la pantalla) y no el de cada paso: así el
+    // margen no cambia en medio de un vuelo de cámara, que lo cortaría.
+    this.anchoVentana() <= 700 ? { arriba: 60, abajo: Math.round(this.altoVentana() * 0.52) + 50 } : null,
+    { equal: (a, b) => a?.arriba === b?.arriba && a?.abajo === b?.abajo },
+  );
 
   protected readonly camara = computed<MapViewState>(() => {
     const p = this.actual();
@@ -148,7 +160,7 @@ export class Recorrido implements OnDestroy {
       const profundidad = (enRama ? ej.tr.profundidad : ej.tr.profundidad / 2) * EXAGERACION_VERTICAL;
       base = { ...p.camara, longitude: objetivo[0], latitude: objetivo[1], bearing: ej.rumbo - 90, position: [0, 0, -profundidad] };
     }
-    return desplazarALaDerecha(base, this.anchoVentana());
+    return encuadrar(base, this.anchoVentana(), this.paso());
   });
 
   protected readonly seleccionado = computed(() => {
@@ -176,8 +188,17 @@ const ANCHO_TARJETA = 500;
  * la tarjeta, en lugar del centro de la pantalla. En pantallas angostas la tarjeta va abajo
  * y no hace falta.
  */
+/** Cuánto más se aleja la cámara en el celular según el paso (la escena es más ancha). */
+const ALEJAR_CELULAR = [0.3, 0, 0.5, 0, 0, 0];
+
+function encuadrar(v: MapViewState, ancho: number, paso: number): MapViewState {
+  // En el celular la pantalla es angosta: la cámara se aleja un poco. El encuadre vertical lo
+  // resuelve el margen que se le pasa al mapa (el espacio que tapa la tarjeta).
+  if (ancho <= 700) return { ...v, zoom: v.zoom - (ancho < 500 ? 0.8 : 0.5) - (ALEJAR_CELULAR[paso] ?? 0) };
+  return desplazarALaDerecha(v, ancho);
+}
+
 function desplazarALaDerecha(v: MapViewState, anchoVentana: number): MapViewState {
-  if (anchoVentana <= 700) return v;
   const pixeles = Math.min(ANCHO_TARJETA, anchoVentana * 0.4) / 2;
   const gradosPorPixel = 360 / (512 * 2 ** v.zoom);
   const rumbo = ((v.bearing ?? 0) * Math.PI) / 180;

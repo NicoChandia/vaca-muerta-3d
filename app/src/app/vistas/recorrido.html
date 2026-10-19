@@ -8,6 +8,7 @@
       [seleccionado]="seleccionado()"
       [camara]="camara()"
       colorUnico="#8ec1ff"
+      [margen]="margen()"
       [aislado]="paso() === 1 || paso() === 2"
       [etapas]="paso() === 2"
       [descripcion]="actual().titulo"
@@ -108,7 +109,7 @@
       }
     </section>
 
-    <p class="fuente">Datos públicos: {{ d.meta.fuente }}. Trayectorias con profundidad reconstruida y exagerada 4 veces. · Proyecto independiente, hecho por <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
+    <p class="fuente">Datos públicos: {{ d.meta.fuente }}.<span class="solo-amplio"> Trayectorias con profundidad reconstruida y exagerada 4 veces.</span> · Proyecto independiente, hecho por <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
   </main>
 } @else {
   <main class="estado"><p class="estado-titulo">Cargando…</p></main>
