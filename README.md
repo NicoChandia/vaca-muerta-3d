@@ -1,14 +1,29 @@
 # Vaca Muerta, pozo por pozo
 
-Sitio abierto con los datos públicos de producción de Vaca Muerta, en tres vistas:
+**Sitio:** https://vaca-muerta-3d.vercel.app
 
+Vaca Muerta explicada con sus propios datos: qué es, cuánto produce, cómo se extrae y por qué crece.
+Usa los datos abiertos de la Secretaría de Energía de la Nación (Capítulo IV, datos.gob.ar).
+
+![Mapa 3D de los pozos de Vaca Muerta](app/public/compartir.png)
+
+Cuatro vistas:
+
+- **Qué es** (`/que-es`): recorrido de 6 pasos para quien no conoce Vaca Muerta: la roca, los pozos
+  que bajan y doblan, la fractura, la caída de producción y por qué nunca se deja de perforar.
 - **Producción** (`/produccion`): mapa 3D donde cada columna es un pozo y su altura lo que produjo
   en el mes. Petróleo, gas o agua; vista por pozo o por zonas; línea de tiempo animada con momentos
-  clave; buscador de pozos y áreas; pozos sin producción; ficha de cada pozo.
+  clave; reparto por provincia; buscador de pozos y áreas; pozos sin producción; ficha de cada pozo.
 - **Subsuelo** (`/subsuelo`): el recorrido de cada pozo bajo tierra, con la rama horizontal dentro
   de la formación. La profundidad está exagerada 4 veces para que se lea a la escala de la cuenca.
 - **Rendimiento** (`/rendimiento`): ¿los pozos nuevos rinden más? Producción del primer año según el
-  año de arranque, curvas de caída, comparación por empresa y los pozos que más produjeron.
+  año de arranque, curvas de caída, largo de rama y días de perforación, comparación por empresa y
+  los pozos que más produjeron.
+
+**Tecnologías:** Angular 21 (signals, componentes standalone), deck.gl y MapLibre para el 3D,
+Python (pandas, NumPy) para procesar los datos. Publicado en Vercel.
+
+Proyecto independiente de [Nicolás Chandía](https://www.linkedin.com/in/nicolas-chandia).
 
 ## Estructura
 
