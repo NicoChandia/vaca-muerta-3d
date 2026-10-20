@@ -1,6 +1,15 @@
 {
   "framework": "angular",
-  "buildCommand": "ng build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/app/browser",
-  "rewrites": [{ "source": "/((?!data/|.*\\.).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/(que-es|produccion|subsuelo|rendimiento)",
+      "destination": "/$1/index.html"
+    },
+    {
+      "source": "/((?!data/|.*\\.).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
