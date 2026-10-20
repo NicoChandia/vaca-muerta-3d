@@ -1,12 +1,12 @@
 @switch (servicio.estado()) {
   @case ('cargando') {
     <main class="estado" aria-busy="true">
-      <p class="estado-titulo">Cargando pozos…</p>
+      <p class="estado-titulo">{{ en() ? 'Loading wells…' : 'Cargando pozos…' }}</p>
     </main>
   }
   @case ('error') {
     <main class="estado">
-      <h1 class="estado-titulo">No se pudieron cargar los datos</h1>
+      <h1 class="estado-titulo">{{ en() ? 'The data could not be loaded' : 'No se pudieron cargar los datos' }}</h1>
       <p>{{ servicio.error() }}</p>
       <p class="estado-ayuda">
         Para datos de ejemplo: <code>python pipeline/generar_ejemplo.py</code><br />
@@ -36,59 +36,70 @@
         <div class="hud">
           <header class="titulo panel">
             @if (vista() === 'subsuelo') {
-              <h1>Vaca Muerta, bajo&nbsp;tierra</h1>
-              <p>Cada línea es el recorrido de un pozo: baja hasta la formación y la atraviesa en horizontal.</p>
+              @if (en()) {
+                <h1>Vaca Muerta, underground</h1>
+                <p>Each line is the path of a well: it drops down to the formation and runs through it horizontally.</p>
+              } @else {
+                <h1>Vaca Muerta, bajo&nbsp;tierra</h1>
+                <p>Cada línea es el recorrido de un pozo: baja hasta la formación y la atraviesa en horizontal.</p>
+              }
             } @else {
-              <h1>Vaca Muerta, pozo&nbsp;por&nbsp;pozo</h1>
-              <p>Cada columna es un pozo. Su altura es lo que produjo en el mes.</p>
-              <p class="primera-vez">¿Primera vez? <a routerLink="/que-es">Vaca Muerta explicada en 6 pasos</a></p>
+              @if (en()) {
+                <h1>Vaca Muerta, well&nbsp;by&nbsp;well</h1>
+                <p>Each column is a well. Its height is what it produced that month.</p>
+                <p class="primera-vez">First time here? <a [routerLink]="ruta('que-es')">Vaca Muerta explained in 6 steps</a></p>
+              } @else {
+                <h1>Vaca Muerta, pozo&nbsp;por&nbsp;pozo</h1>
+                <p>Cada columna es un pozo. Su altura es lo que produjo en el mes.</p>
+                <p class="primera-vez">¿Primera vez? <a [routerLink]="ruta('que-es')">Vaca Muerta explicada en 6 pasos</a></p>
+              }
             }
             @if (d.meta.esEjemplo) {
               <p class="aviso" role="note">
-                Datos de ejemplo: empresas, áreas y caudales inventados para probar la app.
+                {{ en() ? 'Sample data: companies, areas and rates made up to test the app.' : 'Datos de ejemplo: empresas, áreas y caudales inventados para probar la app.' }}
               </p>
             }
             <vm-buscador [datos]="d" (elegir)="irAResultado($event)" />
           </header>
 
-          <section class="controles panel" aria-label="Opciones del mapa">
-            <div class="grupo" role="group" aria-label="Qué medir">
-              <button type="button" [attr.aria-pressed]="medida() === 'petroleo'" (click)="medida.set('petroleo')">Petróleo</button>
+          <section class="controles panel" [attr.aria-label]="en() ? 'Map options' : 'Opciones del mapa'">
+            <div class="grupo" role="group" [attr.aria-label]="en() ? 'What to measure' : 'Qué medir'">
+              <button type="button" [attr.aria-pressed]="medida() === 'petroleo'" (click)="medida.set('petroleo')">{{ en() ? 'Oil' : 'Petróleo' }}</button>
               <button type="button" [attr.aria-pressed]="medida() === 'gas'" (click)="medida.set('gas')">Gas</button>
-              <button type="button" [attr.aria-pressed]="medida() === 'agua'" (click)="medida.set('agua')">Agua</button>
+              <button type="button" [attr.aria-pressed]="medida() === 'agua'" (click)="medida.set('agua')">{{ en() ? 'Water' : 'Agua' }}</button>
             </div>
             @if (vista() === 'superficie') {
-              <div class="grupo" role="group" aria-label="Cómo mostrar">
-                <button type="button" [attr.aria-pressed]="modo() === 'columnas'" (click)="modo.set('columnas')">Pozos</button>
-                <button type="button" [attr.aria-pressed]="modo() === 'hexagonos'" (click)="modo.set('hexagonos')">Zonas</button>
+              <div class="grupo" role="group" [attr.aria-label]="en() ? 'How to show' : 'Cómo mostrar'">
+                <button type="button" [attr.aria-pressed]="modo() === 'columnas'" (click)="modo.set('columnas')">{{ en() ? 'Wells' : 'Pozos' }}</button>
+                <button type="button" [attr.aria-pressed]="modo() === 'hexagonos'" (click)="modo.set('hexagonos')">{{ en() ? 'Areas' : 'Zonas' }}</button>
               </div>
             }
-            <div class="grupo" role="group" aria-label="Color de los pozos" [class.inactivo]="modo() === 'hexagonos' && vista() === 'superficie'">
-              <button type="button" [attr.aria-pressed]="colorPor() === 'empresa'" (click)="colorPor.set('empresa')" [disabled]="modo() === 'hexagonos' && vista() === 'superficie'">Por empresa</button>
-              <button type="button" [attr.aria-pressed]="colorPor() === 'tipo'" (click)="colorPor.set('tipo')" [disabled]="modo() === 'hexagonos' && vista() === 'superficie'">Por tipo</button>
+            <div class="grupo" role="group" [attr.aria-label]="en() ? 'Well color' : 'Color de los pozos'" [class.inactivo]="modo() === 'hexagonos' && vista() === 'superficie'">
+              <button type="button" [attr.aria-pressed]="colorPor() === 'empresa'" (click)="colorPor.set('empresa')" [disabled]="modo() === 'hexagonos' && vista() === 'superficie'">{{ en() ? 'By company' : 'Por empresa' }}</button>
+              <button type="button" [attr.aria-pressed]="colorPor() === 'tipo'" (click)="colorPor.set('tipo')" [disabled]="modo() === 'hexagonos' && vista() === 'superficie'">{{ en() ? 'By type' : 'Por tipo' }}</button>
             </div>
             <button type="button" class="interruptor" [attr.aria-pressed]="conNombres()" (click)="conNombres.set(!conNombres())">
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.4" fill="currentColor"/></svg>
-              Ciudades y provincias
+              {{ en() ? 'Cities and provinces' : 'Ciudades y provincias' }}
             </button>
             @if (vista() === 'superficie' && modo() === 'columnas') {
               <button type="button" class="interruptor" [attr.aria-pressed]="mostrarInactivos()" (click)="mostrarInactivos.set(!mostrarInactivos())">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="13" width="4" height="7" rx="1" fill="currentColor" opacity=".5"/><rect x="10" y="6" width="4" height="14" rx="1" fill="currentColor"/><rect x="15" y="15" width="4" height="5" rx="1" fill="currentColor" opacity=".5"/></svg>
-                Pozos sin producir
+                {{ en() ? 'Idle wells' : 'Pozos sin producir' }}
               </button>
             }
-            <button type="button" class="icono" (click)="recentrar()" aria-label="Volver a la vista inicial" title="Volver a la vista inicial">
+            <button type="button" class="icono" (click)="recentrar()" [attr.aria-label]="en() ? 'Back to the initial view' : 'Volver a la vista inicial'" [title]="en() ? 'Back to the initial view' : 'Volver a la vista inicial'">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
             </button>
           </section>
 
           @if (vista() === 'superficie') {
             @if (indicadores(); as i) {
-              <section class="momento" aria-live="polite" aria-label="Indicadores del mes">
+              <section class="momento" aria-live="polite" [attr.aria-label]="en() ? 'Figures for the month' : 'Indicadores del mes'">
                 @if (momentoActual(); as m) {
                   <div class="hito">
-                    <strong>{{ m.titulo }}</strong>
-                    <p>{{ m.texto }}</p>
+                    <strong>{{ momentoTexto(m).titulo }}</strong>
+                    <p>{{ momentoTexto(m).texto }}</p>
                   </div>
                 }
                 <p class="fecha">
@@ -103,25 +114,25 @@
                         <span class="numero">{{ c.valor }}</span>
                         <span class="unidad">{{ c.unidad }}</span>
                         @if (c.variacion !== null) {
-                          <span class="variacion">{{ f.variacion(c.variacion) }} en un año</span>
+                          <span class="variacion">{{ f.variacion(c.variacion) }} {{ en() ? 'year on year' : 'en un año' }}</span>
                         }
                       </dd>
                     </div>
                   }
                   <div>
-                    <dt>Pozos produciendo</dt>
+                    <dt>{{ en() ? 'Producing wells' : 'Pozos produciendo' }}</dt>
                     <dd><span class="numero chico">{{ f.entero(i.activos) }}</span></dd>
                   </div>
                   <div class="ancho">
-                    <dt>Pozos nuevos</dt>
+                    <dt>{{ en() ? 'New wells' : 'Pozos nuevos' }}</dt>
                     <dd>
                       <span class="numero chico">{{ f.entero(i.conectados) }}</span>
-                      <span class="unidad">en el mes, {{ f.entero(i.conectados12) }} en 12 meses</span>
+                      <span class="unidad">{{ en() ? 'this month, ' + f.entero(i.conectados12) + ' in 12 months' : 'en el mes, ' + f.entero(i.conectados12) + ' en 12 meses' }}</span>
                     </dd>
                   </div>
                   @if (provincias(); as provs) {
                     <div class="ancho">
-                      <dt>{{ nombreMedida() }} por provincia</dt>
+                      <dt>{{ nombreMedida() }} {{ en() ? 'by province' : 'por provincia' }}</dt>
                       <dd class="provincias">
                         @for (p of provs; track p.nombre) {
                           <span><b>{{ p.nombre }}</b> {{ p.texto }}</span>
@@ -133,31 +144,31 @@
               </section>
             }
           } @else {
-            <section class="momento" aria-label="Sobre esta vista">
+            <section class="momento" [attr.aria-label]="en() ? 'About this view' : 'Sobre esta vista'">
               @if (trayectorias.estado() === 'falta') {
                 <div class="hito">
-                  <strong>Faltan las trayectorias</strong>
+                  <strong>{{ en() ? 'Well paths are missing' : 'Faltan las trayectorias' }}</strong>
                   <p>
-                    Para dibujar los pozos bajo tierra, bajá el CSV "Trayectorias de Pozo Vaca Muerta" de datos.gob.ar y corré
+                    {{ en() ? 'To draw the wells underground, download the "Trayectorias de Pozo Vaca Muerta" CSV from datos.gob.ar and run' : 'Para dibujar los pozos bajo tierra, bajá el CSV "Trayectorias de Pozo Vaca Muerta" de datos.gob.ar y corré' }}
                     <code>python pipeline/procesar_trayectorias.py extras/trayectorias.csv</code>.
                   </p>
                 </div>
               } @else if (trayectorias.datos(); as t) {
                 <dl class="cifras">
                   <div>
-                    <dt>Pozos dibujados</dt>
+                    <dt>{{ en() ? 'Wells drawn' : 'Pozos dibujados' }}</dt>
                     <dd><span class="numero">{{ f.entero(t.cantidad) }}</span></dd>
                   </div>
                   <div>
-                    <dt>Rama horizontal promedio</dt>
+                    <dt>{{ en() ? 'Average lateral length' : 'Rama horizontal promedio' }}</dt>
                     <dd><span class="numero">{{ f.entero(t.ramaPromedio) }}</span><span class="unidad">metros</span></dd>
                   </div>
                   <div>
-                    <dt>Profundidad promedio</dt>
+                    <dt>{{ en() ? 'Average depth' : 'Profundidad promedio' }}</dt>
                     <dd><span class="numero">{{ f.entero(t.profundidadPromedio) }}</span><span class="unidad">metros</span></dd>
                   </div>
                   <div>
-                    <dt>Rama más larga</dt>
+                    <dt>{{ en() ? 'Longest lateral' : 'Rama más larga' }}</dt>
                     <dd><span class="numero">{{ f.entero(t.ramaMaxima) }}</span><span class="unidad">metros</span></dd>
                   </div>
                 </dl>
@@ -165,7 +176,7 @@
             </section>
           }
 
-          <aside class="lateral panel" [attr.aria-label]="seleccionado() !== null ? 'Ficha del pozo' : 'Empresas'">
+          <aside class="lateral panel" [attr.aria-label]="seleccionado() !== null ? (en() ? 'Well details' : 'Ficha del pozo') : (en() ? 'Companies' : 'Empresas')">
             @if (seleccionado() !== null) {
               <vm-ficha-pozo
                 [datos]="d"
@@ -176,8 +187,8 @@
                 (cerrar)="seleccionado.set(null)"
               />
             } @else {
-              <h2>Quién produce más</h2>
-              <p class="nota">{{ nombreMedida() }} en {{ textoMes() }}. Tocá una empresa para ver solo sus pozos.</p>
+              <h2>{{ en() ? 'Top producers' : 'Quién produce más' }}</h2>
+              <p class="nota">{{ en() ? nombreMedida() + ' in ' + textoMes() + '. Tap a company to see only its wells.' : nombreMedida() + ' en ' + textoMes() + '. Tocá una empresa para ver solo sus pozos.' }}</p>
               <ol class="ranking">
                 @for (r of ranking(); track r.indice) {
                   <li>
@@ -188,13 +199,13 @@
                       (click)="resaltar(r.indice)"
                     >
                       <span class="fila">
-                        <span class="nombre">{{ r.nombre }}</span>
+                        <span class="nombre">{{ nombreEmpresa(r.nombre) }}</span>
                         <span class="valor">{{ valorRanking(r.valor) }}</span>
                       </span>
                       <span class="barra" aria-hidden="true">
                         <span [style.width.%]="r.ancho" [style.background]="r.color"></span>
                       </span>
-                      <span class="participacion">{{ f.decimal(r.participacion) }}% del total</span>
+                      <span class="participacion">{{ f.decimal(r.participacion) }}% {{ en() ? 'of total' : 'del total' }}</span>
                     </button>
                   </li>
                 }
@@ -204,14 +215,14 @@
 
           <footer class="linea-tiempo panel">
             <div class="reproductor">
-              <button type="button" class="play" (click)="alternarReproduccion()" [attr.aria-label]="reproduciendo() ? 'Pausar la línea de tiempo' : 'Reproducir la línea de tiempo'">
+              <button type="button" class="play" (click)="alternarReproduccion()" [attr.aria-label]="reproduciendo() ? (en() ? 'Pause the timeline' : 'Pausar la línea de tiempo') : (en() ? 'Play the timeline' : 'Reproducir la línea de tiempo')">
                 @if (reproduciendo()) {
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
                 } @else {
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></svg>
                 }
               </button>
-              <button type="button" class="velocidad" (click)="cambiarVelocidad()" [attr.aria-label]="'Velocidad ' + velocidades[velocidad()].etiqueta">
+              <button type="button" class="velocidad" (click)="cambiarVelocidad()" [attr.aria-label]="(en() ? 'Speed ' : 'Velocidad ') + velocidades[velocidad()].etiqueta">
                 {{ velocidades[velocidad()].etiqueta }}
               </button>
             </div>
@@ -226,16 +237,16 @@
               />
               <p class="leyenda">
                 @for (e of d.meta.empresas; track e.nombre) {
-                  <span><i [style.background]="e.color" aria-hidden="true"></i>{{ e.nombre }}</span>
+                  <span><i [style.background]="e.color" aria-hidden="true"></i>{{ nombreEmpresa(e.nombre) }}</span>
                 }
                 @if (mostrarInactivos() && vista() === 'superficie') {
-                  <span><i class="gris" aria-hidden="true"></i>Sin producción ese mes</span>
+                  <span><i class="gris" aria-hidden="true"></i>{{ en() ? 'No production that month' : 'Sin producción ese mes' }}</span>
                 }
               </p>
             </div>
           </footer>
 
-          <p class="fuente">Datos públicos: {{ d.meta.fuente }} · Proyecto independiente, hecho por <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
+          <p class="fuente">{{ en() ? 'Public data:' : 'Datos públicos:' }} {{ fuente(d.meta.fuente) }} · {{ en() ? 'Independent project by' : 'Proyecto independiente, hecho por' }} <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
         </div>
       </main>
     }

@@ -1,8 +1,9 @@
 import { Component, ElementRef, OnDestroy, afterNextRender, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatosService, formato } from '../datos';
+import { DatosService, formato, nombreEmpresa, textoFuente } from '../datos';
 import { AnioPerforacion, Fluido, calcularPerforacion, calcularRendimiento } from '../rendimiento-calculo';
 import { TrayectoriasService } from '../trayectorias';
+import { enIngles, ruta, tr } from '../idioma';
 import { Seo } from '../seo';
 
 /** Rampa de un solo tono para los años: los más viejos tenues, los más nuevos brillantes. */
@@ -24,6 +25,10 @@ interface Hover {
 export class Rendimiento implements OnDestroy {
   protected readonly servicio = inject(DatosService);
   protected readonly f = formato;
+  protected readonly en = enIngles;
+  protected readonly ruta = ruta;
+  protected readonly nombreEmpresa = nombreEmpresa;
+  protected readonly fuente = textoFuente;
   protected readonly fluido = signal<Fluido>('petroleo');
   protected readonly ancho = signal(720);
   protected readonly hover = signal<Hover | null>(null);
@@ -58,16 +63,20 @@ export class Rendimiento implements OnDestroy {
 
   /** Unidad del primer año: petróleo en miles de barriles, gas en millones de m³. */
   protected primerAnio(v: number): string {
-    return this.fluido() === 'petroleo' ? `${formato.entero(v / 1000)} mil barriles` : `${formato.decimal(v / 1000)} millones de m³`;
+    return this.fluido() === 'petroleo'
+      ? `${formato.entero(v / 1000)} ${tr('mil barriles', 'thousand barrels')}`
+      : `${formato.decimal(v / 1000)} ${tr('millones de m³', 'million m³')}`;
   }
   protected primerAnioCorto(v: number): string {
     return this.fluido() === 'petroleo' ? formato.entero(v / 1000) : formato.decimal(v / 1000);
   }
   protected readonly unidadPrimerAnio = computed(() =>
-    this.fluido() === 'petroleo' ? 'miles de barriles en el primer año' : 'millones de m³ en el primer año',
+    this.fluido() === 'petroleo'
+      ? tr('miles de barriles en el primer año', 'thousand barrels in the first year')
+      : tr('millones de m³ en el primer año', 'million m³ in the first year'),
   );
   protected readonly unidadCaudal = computed(() =>
-    this.fluido() === 'petroleo' ? 'barriles por día' : 'miles de m³ por día',
+    this.fluido() === 'petroleo' ? tr('barriles por día', 'barrels per day') : tr('miles de m³ por día', 'thousand m³ per day'),
   );
 
   /** La frase principal: el primer año contra el último año comparable. */
@@ -84,7 +93,7 @@ export class Rendimiento implements OnDestroy {
       horizontal: horizontal && horizontal.anio > primero.anio && horizontal.anio < ultimo.anio ? horizontal : null,
       vecesHorizontal: horizontal ? ultimo.mediana / Math.max(1, horizontal.mediana) : 0,
       veces: ultimo.mediana / Math.max(1, primero.mediana),
-      tipo: this.fluido() === 'petroleo' ? 'de petróleo' : 'de gas',
+      tipo: this.fluido() === 'petroleo' ? tr('de petróleo', 'oil') : tr('de gas', 'gas'),
     };
   });
 
@@ -144,11 +153,17 @@ export class Rendimiento implements OnDestroy {
     this.hover.set({
       x: b.cx,
       y: b.y,
-      titulo: `Pozos que arrancaron en ${b.c.anio}`,
+      titulo: tr(`Pozos que arrancaron en ${b.c.anio}`, `Wells that started in ${b.c.anio}`),
       lineas: [
-        `Mediana: ${this.primerAnio(b.c.mediana)}`,
-        `La mitad está entre ${this.primerAnioCorto(b.c.p25)} y ${this.primerAnio(b.c.p75)}`,
-        `${formato.entero(b.c.n)} pozos, ${formato.entero(b.c.horizontales)}% horizontales`,
+        `${tr('Mediana', 'Median')}: ${this.primerAnio(b.c.mediana)}`,
+        tr(
+          `La mitad está entre ${this.primerAnioCorto(b.c.p25)} y ${this.primerAnio(b.c.p75)}`,
+          `Half are between ${this.primerAnioCorto(b.c.p25)} and ${this.primerAnio(b.c.p75)}`,
+        ),
+        tr(
+          `${formato.entero(b.c.n)} pozos, ${formato.entero(b.c.horizontales)}% horizontales`,
+          `${formato.entero(b.c.n)} wells, ${formato.entero(b.c.horizontales)}% horizontal`,
+        ),
       ],
     });
   }
@@ -215,12 +230,12 @@ export class Rendimiento implements OnDestroy {
     this.mesCurva.set(k);
     const lineas = c.lineas
       .filter((l) => l.valores[k] !== null)
-      .map((l) => `${l.anio}: ${formato.entero(l.valores[k]!)} ${this.fluido() === 'petroleo' ? 'bbl/d' : 'mil m³/d'}`);
+      .map((l) => `${l.anio}: ${formato.entero(l.valores[k]!)} ${this.fluido() === 'petroleo' ? 'bbl/d' : tr('mil m³/d', 'thousand m³/d')}`);
     this.hover.set({
       x: c.x(k),
       y: this.margen.arriba,
-      titulo: k === 0 ? 'Primer mes' : `Mes ${k + 1} desde el arranque`,
-      lineas: lineas.length ? lineas : ['Sin pozos suficientes'],
+      titulo: k === 0 ? tr('Primer mes', 'First month') : tr(`Mes ${k + 1} desde el arranque`, `Month ${k + 1} since start-up`),
+      lineas: lineas.length ? lineas : [tr('Sin pozos suficientes', 'Not enough wells')],
     });
   }
 
@@ -296,11 +311,17 @@ export class Rendimiento implements OnDestroy {
       serie,
       x: b.cx,
       y: b.y,
-      titulo: `Pozos que empezaron a perforarse en ${b.a.anio}`,
+      titulo: tr(`Pozos que empezaron a perforarse en ${b.a.anio}`, `Wells whose drilling started in ${b.a.anio}`),
       lineas:
         serie === 'rama'
-          ? [`Rama típica: ${formato.entero(b.a.rama!)} m`, `${formato.entero(b.a.nRama)} pozos con trayectoria`]
-          : [`Perforación típica: ${formato.entero(b.a.dias!)} días`, `${formato.entero(b.a.n)} pozos horizontales`],
+          ? [
+              tr(`Rama típica: ${formato.entero(b.a.rama!)} m`, `Typical lateral: ${formato.entero(b.a.rama!)} m`),
+              tr(`${formato.entero(b.a.nRama)} pozos con trayectoria`, `${formato.entero(b.a.nRama)} wells with a path`),
+            ]
+          : [
+              tr(`Perforación típica: ${formato.entero(b.a.dias!)} días`, `Typical drilling: ${formato.entero(b.a.dias!)} days`),
+              tr(`${formato.entero(b.a.n)} pozos horizontales`, `${formato.entero(b.a.n)} horizontal wells`),
+            ],
     });
   }
 

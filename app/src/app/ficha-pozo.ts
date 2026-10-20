@@ -1,6 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { Trayectoria } from './trayectorias';
-import { Datos, ESTADO_TEXTO, MEDIDA_INFO, Medida, fechaLarga, formato, nombreMes, valorPozo } from './datos';
+import { Datos, ESTADO_TEXTO, MEDIDA_INFO, Medida, fechaLarga, formato, nombreArea, nombreEmpresa, nombreMes, valorPozo } from './datos';
+import { enIngles, idioma, tr } from './idioma';
 
 const ANCHO = 280;
 const ALTO = 86;
@@ -14,35 +15,35 @@ const ALTO = 86;
         <h2>{{ pozo().nombre }}</h2>
         <p class="empresa">
           <span class="muestra" [style.background]="empresa().color" aria-hidden="true"></span>
-          {{ empresa().nombre }}
+          {{ nombreEmpresa(empresa().nombre) }}
         </p>
       </div>
-      <button type="button" class="cerrar" (click)="cerrar.emit()" aria-label="Cerrar la ficha del pozo">✕</button>
+      <button type="button" class="cerrar" (click)="cerrar.emit()" [attr.aria-label]="en() ? 'Close well details' : 'Cerrar la ficha del pozo'">✕</button>
     </header>
 
     <dl class="datos">
-      <div><dt>Área</dt><dd>{{ area() }}</dd></div>
+      <div><dt>{{ en() ? 'Area' : 'Área' }}</dt><dd>{{ area() }}</dd></div>
       @if (provincia(); as prov) {
-        <div><dt>Provincia</dt><dd>{{ prov }}</dd></div>
+        <div><dt>{{ en() ? 'Province' : 'Provincia' }}</dt><dd>{{ prov }}</dd></div>
       }
-      <div><dt>Tipo</dt><dd>{{ pozo().esGas ? 'Gasífero' : 'Petrolífero' }}</dd></div>
-      <div><dt>Estado</dt><dd>{{ estado() }}</dd></div>
-      <div><dt>Largo total del pozo</dt><dd>{{ profundidad() }}</dd></div>
+      <div><dt>{{ en() ? 'Type' : 'Tipo' }}</dt><dd>{{ pozo().esGas ? (en() ? 'Gas well' : 'Gasífero') : (en() ? 'Oil well' : 'Petrolífero') }}</dd></div>
+      <div><dt>{{ en() ? 'Status' : 'Estado' }}</dt><dd>{{ estado() }}</dd></div>
+      <div><dt>{{ en() ? 'Total well length' : 'Largo total del pozo' }}</dt><dd>{{ profundidad() }}</dd></div>
       @if (trayectoria(); as t) {
-        <div><dt>Rama horizontal</dt><dd>{{ f.entero(t.rama) }} m</dd></div>
-        <div><dt>Profundidad vertical</dt><dd>{{ f.entero(t.profundidad) }} m</dd></div>
+        <div><dt>{{ en() ? 'Horizontal lateral' : 'Rama horizontal' }}</dt><dd>{{ f.entero(t.rama) }} m</dd></div>
+        <div><dt>{{ en() ? 'Vertical depth' : 'Profundidad vertical' }}</dt><dd>{{ f.entero(t.profundidad) }} m</dd></div>
       }
-      <div><dt>Perforación</dt><dd>{{ perforacion() }}</dd></div>
-      <div><dt>Primera producción</dt><dd>{{ inicio() }}</dd></div>
-      <div><dt>En {{ mesTexto() }}</dt><dd>{{ valorActual() }}</dd></div>
-      <div><dt>Petróleo acumulado</dt><dd>{{ acumPetroleo() }}</dd></div>
-      <div><dt>Gas acumulado</dt><dd>{{ acumGas() }}</dd></div>
-      <div><dt>Agua acumulada</dt><dd>{{ acumAgua() }}</dd></div>
+      <div><dt>{{ en() ? 'Drilling' : 'Perforación' }}</dt><dd>{{ perforacion() }}</dd></div>
+      <div><dt>{{ en() ? 'First production' : 'Primera producción' }}</dt><dd>{{ inicio() }}</dd></div>
+      <div><dt>{{ en() ? 'In' : 'En' }} {{ mesTexto() }}</dt><dd>{{ valorActual() }}</dd></div>
+      <div><dt>{{ en() ? 'Cumulative oil' : 'Petróleo acumulado' }}</dt><dd>{{ acumPetroleo() }}</dd></div>
+      <div><dt>{{ en() ? 'Cumulative gas' : 'Gas acumulado' }}</dt><dd>{{ acumGas() }}</dd></div>
+      <div><dt>{{ en() ? 'Cumulative water' : 'Agua acumulada' }}</dt><dd>{{ acumAgua() }}</dd></div>
     </dl>
 
     <figure class="curva">
       <figcaption>{{ titulo() }}</figcaption>
-      <svg [attr.viewBox]="'0 0 ' + ancho + ' ' + alto" role="img" [attr.aria-label]="'Curva de producción de ' + pozo().nombre">
+      <svg [attr.viewBox]="'0 0 ' + ancho + ' ' + alto" role="img" [attr.aria-label]="(en() ? 'Production curve of ' : 'Curva de producción de ') + pozo().nombre">
         <line x1="0" [attr.x2]="ancho" [attr.y1]="alto - 1" [attr.y2]="alto - 1" class="base" />
         <path [attr.d]="curva().area" class="relleno" [style.fill]="empresa().color" />
         <path [attr.d]="curva().linea" class="linea" [style.stroke]="empresa().color" />
@@ -50,7 +51,7 @@ const ALTO = 86;
           <circle [attr.cx]="m.x" [attr.cy]="m.y" r="4" class="marcador" />
         }
       </svg>
-      <p class="pico">Pico: {{ curva().picoTexto }}</p>
+      <p class="pico">{{ en() ? 'Peak' : 'Pico' }}: {{ curva().picoTexto }}</p>
     </figure>
   `,
   styles: `
@@ -86,37 +87,45 @@ export class FichaPozo {
   readonly cerrar = output<void>();
 
   protected readonly f = formato;
+  protected readonly en = enIngles;
+  protected readonly nombreEmpresa = nombreEmpresa;
   protected readonly ancho = ANCHO;
   protected readonly alto = ALTO;
 
   protected readonly pozo = computed(() => this.datos().pozos[this.indice()]);
   protected readonly empresa = computed(() => this.datos().meta.empresas[this.pozo().empresa]);
   protected readonly provincia = computed(() => this.datos().meta.provincias?.[this.pozo().provincia] ?? null);
-  protected readonly area = computed(() => this.datos().meta.areas[this.pozo().area] ?? 'Sin dato');
+  protected readonly area = computed(() => nombreArea(this.datos().meta.areas[this.pozo().area]));
   protected readonly inicio = computed(() =>
-    this.pozo().conProduccion ? nombreMes(this.datos().meta.meses[this.pozo().inicio]) : 'Sin producción declarada',
+    this.pozo().conProduccion ? nombreMes(this.datos().meta.meses[this.pozo().inicio]) : tr('Sin producción declarada', 'No production reported'),
   );
-  protected readonly estado = computed(() => this.pozo().estadoTexto || ESTADO_TEXTO[this.pozo().estado]);
+  // El estado detallado viene en español en los datos oficiales; en inglés se usa el agrupado.
+  protected readonly estado = computed(() =>
+    idioma() === 'en' ? ESTADO_TEXTO[this.pozo().estado] : this.pozo().estadoTexto || ESTADO_TEXTO[this.pozo().estado],
+  );
   protected readonly profundidad = computed(() => {
     const p = this.pozo().profundidad;
-    return p ? `${formato.entero(p)} m` : 'Sin dato';
+    return p ? `${formato.entero(p)} m` : tr('Sin dato', 'No data');
   });
   protected readonly perforacion = computed(() => {
     const p = this.pozo();
-    if (!p.inicioPerforacion) return 'Sin dato';
-    return p.inicioPerforacion.slice(0, 4) === '1900' ? 'Sin dato' : fechaLarga(p.inicioPerforacion);
+    if (!p.inicioPerforacion || p.inicioPerforacion.slice(0, 4) === '1900') return tr('Sin dato', 'No data');
+    return fechaLarga(p.inicioPerforacion);
   });
   protected readonly acumAgua = computed(() => `${formato.entero(this.pozo().acumAguaM3)} m³`);
   protected readonly titulo = computed(
-    () => ({ petroleo: 'Petróleo, bbl/d', gas: 'Gas, miles de m³/d', agua: 'Agua, m³/d' })[this.medida()],
+    () =>
+      (idioma() === 'en'
+        ? { petroleo: 'Oil, bbl/d', gas: 'Gas, thousand m³/d', agua: 'Water, m³/d' }
+        : { petroleo: 'Petróleo, bbl/d', gas: 'Gas, miles de m³/d', agua: 'Agua, m³/d' })[this.medida()],
   );
   protected readonly mesTexto = computed(() => nombreMes(this.datos().meta.meses[this.mes()], true));
   protected readonly acumPetroleo = computed(() => `${formato.entero(this.pozo().acumPetroleoBbl)} bbl`);
-  protected readonly acumGas = computed(() => `${formato.decimal(this.pozo().acumGasMm3 / 1000)} millones de m³`);
+  protected readonly acumGas = computed(() => `${formato.decimal(this.pozo().acumGasMm3 / 1000)} ${tr('millones de m³', 'million m³')}`);
   protected readonly valorActual = computed(() => {
     const v = valorPozo(this.datos(), this.medida(), this.indice(), this.mes());
-    if (!this.pozo().conProduccion) return 'Sin producción';
-    if (this.mes() < this.pozo().inicio) return 'Todavía no producía';
+    if (!this.pozo().conProduccion) return tr('Sin producción', 'No production');
+    if (this.mes() < this.pozo().inicio) return tr('Todavía no producía', 'Not producing yet');
     return MEDIDA_INFO[this.medida()].pozo(v);
   });
 
@@ -136,7 +145,7 @@ export class FichaPozo {
     const area = `${linea}L${x(valores.length - 1).toFixed(1)},${ALTO - 1}L0,${ALTO - 1}Z`;
     const i = this.mes() - desde;
     const marcador = i >= 0 && i < valores.length ? { x: x(i), y: y(valores[i]) } : null;
-    const picoTexto = valores.some((v) => v > 0) ? MEDIDA_INFO[this.medida()].pozo(max) : 'sin producción';
+    const picoTexto = valores.some((v) => v > 0) ? MEDIDA_INFO[this.medida()].pozo(max) : tr('sin producción', 'no production');
     return { linea, area, marcador, picoTexto };
   });
 }

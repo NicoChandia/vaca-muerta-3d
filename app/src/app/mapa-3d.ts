@@ -14,7 +14,8 @@ import { DatosTrayectorias, Trayectoria } from './trayectorias';
 import { HexagonLayer } from '@deck.gl/aggregation-layers';
 import maplibregl from 'maplibre-gl';
 import { CARTO_KEY } from './config';
-import { Datos, MEDIDA_INFO, Medida, Pozo, hexARgb, produce, valorPozo } from './datos';
+import { Datos, MEDIDA_INFO, Medida, Pozo, formato, hexARgb, nombreArea, nombreEmpresa, produce, valorPozo } from './datos';
+import { tr as elegir } from './idioma';
 
 export type Modo = 'columnas' | 'hexagonos';
 export type ColorPor = 'empresa' | 'tipo';
@@ -636,7 +637,7 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
       ...marcas.map((m) => ({ desde: [lon, lat, z(m)], hasta: [lon + 0.03, lat, z(m)] })),
     ];
     const textos = [
-      ...marcas.map((m) => ({ pos: [lon - 0.015, lat, z(m)], texto: m === 0 ? 'Superficie' : `${(m / 1000).toLocaleString('es-AR')}.000 m` , tipo: 'regla' })),
+      ...marcas.map((m) => ({ pos: [lon - 0.015, lat, z(m)], texto: m === 0 ? elegir('Superficie', 'Surface') : `${formato.entero(m)} m`, tipo: 'regla' })),
       { pos: [lon + 0.05, lat, z(t.profundidadPromedio)], texto: 'Vaca Muerta', tipo: 'formacion' },
       ...CIUDADES.map((c) => ({ pos: [c.lon, c.lat, 0], texto: c.nombre, tipo: 'ciudad' })),
     ];
@@ -697,8 +698,8 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
     const rama = tr.camino.filter(([, , h]) => h <= -tr.profundidad + 1);
     const medio = rama[Math.floor(rama.length / 2)] ?? tr.camino[tr.camino.length - 1];
     const textos = [
-      { pos: [x0, y0, z(-tr.profundidad / 2)], texto: `Baja ${tr.profundidad.toLocaleString('es-AR')} m` },
-      { pos: [medio[0], medio[1], z(medio[2])], texto: `Rama horizontal: ${tr.rama.toLocaleString('es-AR')} m`, rama: true },
+      { pos: [x0, y0, z(-tr.profundidad / 2)], texto: elegir(`Baja ${formato.entero(tr.profundidad)} m`, `Drops ${formato.entero(tr.profundidad)} m`) },
+      { pos: [medio[0], medio[1], z(medio[2])], texto: `${elegir('Rama horizontal', 'Horizontal lateral')}: ${formato.entero(tr.rama)} m`, rama: true },
     ];
     const capas: any[] = [
       new TextLayer({
@@ -789,14 +790,16 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
       const n = o.count ?? o.points?.length ?? 0;
       const valor = o.colorValue ?? 0;
       const m = MEDIDA_INFO[this.medida()];
-      return { html: `<strong>${n.toLocaleString('es-AR')} pozos</strong><br>${m.nombre}: ${m.corto(valor)}`, style: estilo };
+      return { html: `<strong>${formato.entero(n)} ${elegir('pozos', 'wells')}</strong><br>${m.nombre}: ${m.corto(valor)}`, style: estilo };
     }
     if (info.layer?.id === 'formacion') {
       const c = info.object as Celda;
       return {
         html:
-          `<strong>Vaca Muerta a unos ${Math.round(c.profundidad / 10) * 10} m</strong><br>` +
-          (c.pozos ? `Promedio de ${c.pozos} pozos en esta zona` : 'Estimado con las zonas vecinas'),
+          `<strong>${elegir('Vaca Muerta a unos', 'Vaca Muerta at about')} ${formato.entero(Math.round(c.profundidad / 10) * 10)} m</strong><br>` +
+          (c.pozos
+            ? elegir(`Promedio de ${c.pozos} pozos en esta zona`, `Average of ${c.pozos} wells in this area`)
+            : elegir('Estimado con las zonas vecinas', 'Estimated from neighboring areas')),
         style: estilo,
       };
     }
@@ -806,8 +809,8 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
       return {
         html:
           `<strong>${escapar(tr.nombre)}</strong><br>` +
-          `<span style="color:#b9bfd4">${escapar(empresaT)}</span><br>` +
-          `Rama horizontal: ${tr.rama.toLocaleString('es-AR')} m<br>Profundidad: ${tr.profundidad.toLocaleString('es-AR')} m`,
+          `<span style="color:#b9bfd4">${escapar(nombreEmpresa(empresaT))}</span><br>` +
+          `${elegir('Rama horizontal', 'Horizontal lateral')}: ${formato.entero(tr.rama)} m<br>${elegir('Profundidad', 'Depth')}: ${formato.entero(tr.profundidad)} m`,
         style: estilo,
       };
     }
@@ -815,14 +818,17 @@ export class Mapa3d implements AfterViewInit, OnDestroy {
     if (!this.visible(p)) return null;
     const empresa = d.meta.empresas[p.empresa]?.nombre ?? '';
     const lineas = produce(d, p.indice, mes)
-      ? `${MEDIDA_INFO.petroleo.pozo(valorPozo(d, 'petroleo', p.indice, mes))} de petróleo<br>` +
-        `${MEDIDA_INFO.gas.pozo(valorPozo(d, 'gas', p.indice, mes))} de gas<br>` +
-        `${MEDIDA_INFO.agua.pozo(valorPozo(d, 'agua', p.indice, mes))} de agua`
-      : `Sin producción este mes${p.estadoTexto ? `<br>Estado: ${escapar(p.estadoTexto)}` : ''}`;
+      ? `${MEDIDA_INFO.petroleo.pozo(valorPozo(d, 'petroleo', p.indice, mes))} ${elegir('de petróleo', 'of oil')}<br>` +
+        `${MEDIDA_INFO.gas.pozo(valorPozo(d, 'gas', p.indice, mes))} ${elegir('de gas', 'of gas')}<br>` +
+        `${MEDIDA_INFO.agua.pozo(valorPozo(d, 'agua', p.indice, mes))} ${elegir('de agua', 'of water')}`
+      : elegir(
+          `Sin producción este mes${p.estadoTexto ? `<br>Estado: ${escapar(p.estadoTexto)}` : ''}`,
+          'No production this month',
+        );
     return {
       html:
         `<strong>${escapar(p.nombre)}</strong><br>` +
-        `<span style="color:#b9bfd4">${escapar(empresa)}, ${escapar(d.meta.areas[p.area] ?? '')}</span><br>` +
+        `<span style="color:#b9bfd4">${escapar(nombreEmpresa(empresa))}, ${escapar(nombreArea(d.meta.areas[p.area]))}</span><br>` +
         lineas,
       style: estilo,
     };

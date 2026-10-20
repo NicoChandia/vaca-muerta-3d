@@ -46,6 +46,12 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--barda-clara); o
 }
 .navegacion a:hover { color: var(--tinta); }
 .navegacion a.activa { background: var(--barda); color: var(--fondo); font-weight: 600; }
+/* Cambio de idioma: separado de las secciones. */
+.navegacion a.idioma {
+  margin-left: 4px; padding-left: 12px; padding-right: 12px; border-left: 1px solid var(--linea);
+  border-radius: 0 9px 9px 0; font-weight: 600; letter-spacing: 0.04em; font-size: 13px;
+  display: inline-flex; align-items: center;
+}
 
 /* ---------- Estados ---------- */
 .estado {
@@ -232,7 +238,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--barda-clara); o
 
 /* ---------- Celulares y tablets en vertical ---------- */
 @media (max-width: 860px) {
-  .navegacion { top: 10px; }
+  .navegacion { top: 10px; max-width: calc(100vw - 16px); }
   .navegacion a { padding: 7px 12px; }
   .escena { position: static; overflow: visible; }
   .escena::after { display: none; }
@@ -253,6 +259,17 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--barda-clara); o
   .fuente { text-align: left; margin: 0; }
 }
 
+/* En pantallas angostas el menú se ajusta para que entren las cinco opciones. */
+@media (max-width: 480px) {
+  .navegacion { gap: 0; padding: 3px; }
+  .navegacion a { padding: 7px 7px; font-size: 13px; }
+  .navegacion a.idioma { margin-left: 2px; padding: 7px 7px; font-size: 11.5px; }
+}
+@media (max-width: 400px) {
+  .navegacion a { padding: 7px 5px; font-size: 12px; letter-spacing: -0.01em; }
+  .navegacion a.idioma { padding: 7px 6px; font-size: 11px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
@@ -260,3 +277,6 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--barda-clara); o
 /* Reparto por provincia, debajo de las cifras del mes. */
 .cifras dd.provincias { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 14px; color: var(--tinta-suave); }
 .cifras dd.provincias b { color: var(--tinta); font-weight: 600; }
+
+/* En inglés los meses van con mayúscula. */
+html[lang='en'] .fecha-mes { text-transform: none; }

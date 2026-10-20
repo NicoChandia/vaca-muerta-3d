@@ -8,6 +8,10 @@
       "destination": "/$1/index.html"
     },
     {
+      "source": "/en/(what-is|production|underground|performance)",
+      "destination": "/en/$1/index.html"
+    },
+    {
       "source": "/((?!data/|.*\\.).*)",
       "destination": "/index.html"
     }

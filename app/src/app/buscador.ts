@@ -1,5 +1,6 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { Datos, simplificar } from './datos';
+import { Datos, formato, nombreEmpresa, simplificar } from './datos';
+import { enIngles, tr } from './idioma';
 
 export type Resultado =
   | { tipo: 'pozo'; indice: number; texto: string; detalle: string; lon: number; lat: number }
@@ -16,12 +17,12 @@ const MAXIMO = 8;
       <input
         type="search"
         role="combobox"
-        aria-label="Buscar un pozo o un área"
+        [attr.aria-label]="en() ? 'Search for a well or an area' : 'Buscar un pozo o un área'"
         aria-autocomplete="list"
         aria-controls="resultados-busqueda"
         [attr.aria-expanded]="abierto() && resultados().length > 0"
         [attr.aria-activedescendant]="activo() >= 0 ? 'resultado-' + activo() : null"
-        placeholder="Buscar pozo o área"
+        [placeholder]="en() ? 'Search well or area' : 'Buscar pozo o área'"
         autocomplete="off"
         spellcheck="false"
         [value]="texto()"
@@ -32,7 +33,7 @@ const MAXIMO = 8;
       />
     </div>
     @if (abierto() && texto().trim().length >= 2) {
-      <ul class="lista" id="resultados-busqueda" role="listbox" aria-label="Resultados">
+      <ul class="lista" id="resultados-busqueda" role="listbox" [attr.aria-label]="en() ? 'Results' : 'Resultados'">
         @for (r of resultados(); track r.tipo + r.indice; let i = $index) {
           <li
             role="option"
@@ -46,7 +47,7 @@ const MAXIMO = 8;
             <span class="detalle">{{ r.detalle }}</span>
           </li>
         } @empty {
-          <li class="vacio" role="option" aria-disabled="true">No hay pozos ni áreas con ese nombre.</li>
+          <li class="vacio" role="option" aria-disabled="true">{{ en() ? 'No wells or areas with that name.' : 'No hay pozos ni áreas con ese nombre.' }}</li>
         }
       </ul>
     }
@@ -83,6 +84,7 @@ export class Buscador {
   readonly datos = input.required<Datos>();
   readonly elegir = output<Resultado>();
 
+  protected readonly en = enIngles;
   protected readonly texto = signal('');
   protected readonly abierto = signal(false);
   protected readonly activo = signal(-1);
@@ -110,7 +112,7 @@ export class Buscador {
     d.meta.areas.forEach((a, i) => {
       const c = this.centrosArea()[i];
       if (c && simplificar(a).includes(q)) {
-        salida.push({ tipo: 'area', indice: i, texto: a, detalle: `Área, ${c.n.toLocaleString('es-AR')} pozos`, lon: c.lon, lat: c.lat });
+        salida.push({ tipo: 'area', indice: i, texto: a, detalle: tr(`Área, ${formato.entero(c.n)} pozos`, `Area, ${formato.entero(c.n)} wells`), lon: c.lon, lat: c.lat });
       }
     });
     const nombres = this.indicePozos();
@@ -121,7 +123,7 @@ export class Buscador {
           tipo: 'pozo',
           indice: i,
           texto: p.nombre,
-          detalle: `${d.meta.empresas[p.empresa]?.nombre}, ${d.meta.areas[p.area]}`,
+          detalle: `${nombreEmpresa(d.meta.empresas[p.empresa]?.nombre)}, ${d.meta.areas[p.area]}`,
           lon: p.lon,
           lat: p.lat,
         });

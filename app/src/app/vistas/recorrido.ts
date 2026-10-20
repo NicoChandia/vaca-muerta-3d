@@ -6,20 +6,23 @@ import { EXAGERACION_VERTICAL, Mapa3d, Vista } from '../mapa-3d';
 import { TrayectoriasService } from '../trayectorias';
 import { calcularRendimiento } from '../rendimiento-calculo';
 import { Seo } from '../seo';
+import { enIngles, ruta } from '../idioma';
+import { textoFuente } from '../datos';
 
 interface Paso {
   titulo: string;
+  tituloEn: string;
   vista: Vista;
   camara: MapViewState;
 }
 
 const PASOS: Paso[] = [
-  { titulo: 'Una roca a 3 kilómetros de profundidad', vista: 'subsuelo', camara: { longitude: -68.85, latitude: -38.46, zoom: 9.35, pitch: 74, bearing: -18 } },
-  { titulo: 'Pozos que bajan y doblan', vista: 'subsuelo', camara: { longitude: -68.9, latitude: -38.4, zoom: 11.6, pitch: 62, bearing: -30 } },
-  { titulo: 'Fracturar la roca', vista: 'subsuelo', camara: { longitude: -68.9, latitude: -38.4, zoom: 13.3, pitch: 58, bearing: 10 } },
-  { titulo: 'Mucho al principio, menos después', vista: 'superficie', camara: { longitude: -68.88, latitude: -38.36, zoom: 9.2, pitch: 55, bearing: -22 } },
-  { titulo: 'Por eso nunca se deja de perforar', vista: 'superficie', camara: { longitude: -68.88, latitude: -38.36, zoom: 8.6, pitch: 50, bearing: -10 } },
-  { titulo: 'Ahora, explorá', vista: 'superficie', camara: { longitude: -68.86, latitude: -38.3, zoom: 8.3, pitch: 45, bearing: -22 } },
+  { tituloEn: 'A rock 3 kilometers down', titulo: 'Una roca a 3 kilómetros de profundidad', vista: 'subsuelo', camara: { longitude: -68.85, latitude: -38.46, zoom: 9.35, pitch: 74, bearing: -18 } },
+  { tituloEn: 'Wells that drop and turn', titulo: 'Pozos que bajan y doblan', vista: 'subsuelo', camara: { longitude: -68.9, latitude: -38.4, zoom: 11.6, pitch: 62, bearing: -30 } },
+  { tituloEn: 'Fracturing the rock', titulo: 'Fracturar la roca', vista: 'subsuelo', camara: { longitude: -68.9, latitude: -38.4, zoom: 13.3, pitch: 58, bearing: 10 } },
+  { tituloEn: 'A lot at first, less later', titulo: 'Mucho al principio, menos después', vista: 'superficie', camara: { longitude: -68.88, latitude: -38.36, zoom: 9.2, pitch: 55, bearing: -22 } },
+  { tituloEn: 'That is why drilling never stops', titulo: 'Por eso nunca se deja de perforar', vista: 'superficie', camara: { longitude: -68.88, latitude: -38.36, zoom: 8.6, pitch: 50, bearing: -10 } },
+  { tituloEn: 'Now, explore', titulo: 'Ahora, explorá', vista: 'superficie', camara: { longitude: -68.86, latitude: -38.3, zoom: 8.3, pitch: 45, bearing: -22 } },
 ];
 
 /** Recorrido de entrada: explica Vaca Muerta en seis pasos sobre el mismo mapa 3D. */
@@ -35,6 +38,9 @@ export class Recorrido implements OnDestroy {
   protected readonly trayectorias = inject(TrayectoriasService);
   protected readonly f = formato;
   protected readonly pasos = PASOS;
+  protected readonly en = enIngles;
+  protected readonly ruta = ruta;
+  protected readonly fuente = textoFuente;
   protected readonly paso = signal(0);
   protected readonly mes = signal(0);
   private animacion?: ReturnType<typeof setInterval>;
@@ -78,6 +84,7 @@ export class Recorrido implements OnDestroy {
   }
 
   protected readonly actual = computed(() => PASOS[this.paso()]);
+  protected readonly tituloActual = computed(() => (this.en() ? this.actual().tituloEn : this.actual().titulo));
 
   /** El pozo que se muestra en el paso 2: el más productivo con trayectoria publicada. */
   protected readonly pozoEjemplo = computed(() => {

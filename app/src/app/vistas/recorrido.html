@@ -11,106 +11,174 @@
       [margen]="margen()"
       [aislado]="paso() === 1 || paso() === 2"
       [etapas]="paso() === 2"
-      [descripcion]="actual().titulo"
+      [descripcion]="tituloActual()"
     />
 
-    <section class="tarjeta" aria-live="polite" [attr.aria-label]="'Paso ' + (paso() + 1) + ' de ' + pasos.length">
-      <p class="contador">{{ paso() + 1 }} de {{ pasos.length }}</p>
-      <h1>{{ actual().titulo }}</h1>
+    <section class="tarjeta" aria-live="polite" [attr.aria-label]="(en() ? 'Step ' : 'Paso ') + (paso() + 1) + (en() ? ' of ' : ' de ') + pasos.length">
+      <p class="contador">{{ paso() + 1 }} {{ en() ? 'of' : 'de' }} {{ pasos.length }}</p>
+      <h1>{{ tituloActual() }}</h1>
 
       @switch (paso()) {
         @case (0) {
-          <p>
-            Vaca Muerta es una capa de roca que se formó en el fondo de un mar hace unos 150 millones de años. Ocupa unos
-            30.000 km², sobre todo en Neuquén, y está a unos
-            <b>{{ f.entero(trayectorias.datos()?.profundidadPromedio ?? 2900) }} metros</b> de profundidad.
-          </p>
-          <p>
-            El petróleo y el gas están atrapados en poros diminutos de esa roca. Por eso se la llama "no convencional": no
-            alcanza con hacer un pozo, hay que abrirle camino al petróleo. En el mapa, la capa clara es la formación, con
-            los pozos que llegan hasta ella.
-          </p>
-          <p class="nota-paso">
-            ¿Y el nombre? Viene de la sierra de la Vaca Muerta, cerca de Zapala, donde el geólogo Charles Weaver la
-            describió en 1931. En geología, cada formación lleva el nombre del lugar donde se la encontró.
-          </p>
-        }
-        @case (1) {
-          <p>
-            Cada pozo baja en vertical hasta la formación y ahí dobla para correr en horizontal dentro de la roca. Así toca
-            mucha más roca que un pozo vertical.
-          </p>
-          @if (pozoEjemplo(); as e) {
+          @if (en()) {
             <p>
-              El pozo resaltado, <b>{{ e.tr.nombre }}</b>, recorre <b>{{ f.entero(e.tr.rama) }} metros</b> en horizontal. La
-              rama típica de Vaca Muerta mide {{ f.entero(trayectorias.datos()?.ramaPromedio ?? 0) }} m, y la más larga
-              publicada, {{ f.entero(trayectorias.datos()?.ramaMaxima ?? 0) }} m.
+              Vaca Muerta is a layer of rock that formed at the bottom of a sea some 150 million years ago. It covers about
+              30,000 km², mostly in Neuquén, Argentina, and lies about
+              <b>{{ f.entero(trayectorias.datos()?.profundidadPromedio ?? 2900) }} meters</b> deep.
+            </p>
+            <p>
+              The oil and gas are trapped in tiny pores in that rock. That is why it is called "unconventional": drilling a
+              well is not enough, the oil needs a path opened for it. On the map, the light layer is the formation, with the
+              wells that reach it.
+            </p>
+            <p class="nota-paso">
+              Where does the name come from? From the Vaca Muerta ("dead cow") range near Zapala, where geologist Charles
+              Weaver described it in 1931. In geology, each formation is named after the place where it was found.
+            </p>
+          } @else {
+            <p>
+              Vaca Muerta es una capa de roca que se formó en el fondo de un mar hace unos 150 millones de años. Ocupa unos
+              30.000 km², sobre todo en Neuquén, y está a unos
+              <b>{{ f.entero(trayectorias.datos()?.profundidadPromedio ?? 2900) }} metros</b> de profundidad.
+            </p>
+            <p>
+              El petróleo y el gas están atrapados en poros diminutos de esa roca. Por eso se la llama "no convencional": no
+              alcanza con hacer un pozo, hay que abrirle camino al petróleo. En el mapa, la capa clara es la formación, con
+              los pozos que llegan hasta ella.
+            </p>
+            <p class="nota-paso">
+              ¿Y el nombre? Viene de la sierra de la Vaca Muerta, cerca de Zapala, donde el geólogo Charles Weaver la
+              describió en 1931. En geología, cada formación lleva el nombre del lugar donde se la encontró.
             </p>
           }
         }
+        @case (1) {
+          @if (en()) {
+            <p>
+              Each well drops vertically down to the formation and then turns to run horizontally inside the rock. That way
+              it touches far more rock than a vertical well.
+            </p>
+            @if (pozoEjemplo(); as e) {
+              <p>
+                The highlighted well, <b>{{ e.tr.nombre }}</b>, runs <b>{{ f.entero(e.tr.rama) }} meters</b> horizontally.
+                The typical Vaca Muerta lateral is {{ f.entero(trayectorias.datos()?.ramaPromedio ?? 0) }} m long, and the
+                longest on record, {{ f.entero(trayectorias.datos()?.ramaMaxima ?? 0) }} m.
+              </p>
+            }
+          } @else {
+            <p>
+              Cada pozo baja en vertical hasta la formación y ahí dobla para correr en horizontal dentro de la roca. Así toca
+              mucha más roca que un pozo vertical.
+            </p>
+            @if (pozoEjemplo(); as e) {
+              <p>
+                El pozo resaltado, <b>{{ e.tr.nombre }}</b>, recorre <b>{{ f.entero(e.tr.rama) }} metros</b> en horizontal. La
+                rama típica de Vaca Muerta mide {{ f.entero(trayectorias.datos()?.ramaPromedio ?? 0) }} m, y la más larga
+                publicada, {{ f.entero(trayectorias.datos()?.ramaMaxima ?? 0) }} m.
+              </p>
+            }
+          }
+        }
         @case (2) {
-          <p>
-            Con la rama terminada, se bombea agua con arena a muy alta presión, tramo por tramo. Cada tramo es una
-            <b>etapa de fractura</b>: la roca se fisura y la arena mantiene abiertas las grietas para que el petróleo y el gas
-            puedan fluir hacia el pozo.
-          </p>
-          <p>Más rama y más etapas significan más roca conectada al pozo.</p>
-          <p class="nota-paso">Los puntos sobre la rama ilustran las etapas, separadas unos 70 m como es habitual.</p>
+          @if (en()) {
+            <p>
+              Once the lateral is finished, water and sand are pumped in at very high pressure, section by section. Each
+              section is a <b>fracture stage</b>: the rock cracks and the sand props the cracks open so oil and gas can flow
+              into the well.
+            </p>
+            <p>A longer lateral and more stages mean more rock connected to the well.</p>
+            <p class="nota-paso">The dots along the lateral illustrate the stages, typically about 70 m apart.</p>
+          } @else {
+            <p>
+              Con la rama terminada, se bombea agua con arena a muy alta presión, tramo por tramo. Cada tramo es una
+              <b>etapa de fractura</b>: la roca se fisura y la arena mantiene abiertas las grietas para que el petróleo y el gas
+              puedan fluir hacia el pozo.
+            </p>
+            <p>Más rama y más etapas significan más roca conectada al pozo.</p>
+            <p class="nota-paso">Los puntos sobre la rama ilustran las etapas, separadas unos 70 m como es habitual.</p>
+          }
         }
         @case (3) {
           @if (declino(); as c) {
-            <p>
-              Un pozo de shale da lo mejor apenas arranca y cae rápido. Uno típico de {{ c.anio }} empezó produciendo unos
-              <b>{{ f.entero(c.pico) }} barriles por día</b> y al año daba <b>{{ f.entero(c.alAnio) }}</b>: un
-              {{ f.entero(c.caida) }}% menos.
-            </p>
-            <svg class="curva" viewBox="0 0 300 100" role="img" [attr.aria-label]="'Curva de producción de un pozo típico de ' + c.anio + ' en sus primeros dos años'">
+            @if (en()) {
+              <p>
+                A shale well gives its best right after it starts, then declines fast. A typical {{ c.anio }} well started at
+                about <b>{{ f.entero(c.pico) }} barrels per day</b> and a year later was producing <b>{{ f.entero(c.alAnio) }}</b>:
+                {{ f.entero(c.caida) }}% less.
+              </p>
+            } @else {
+              <p>
+                Un pozo de shale da lo mejor apenas arranca y cae rápido. Uno típico de {{ c.anio }} empezó produciendo unos
+                <b>{{ f.entero(c.pico) }} barriles por día</b> y al año daba <b>{{ f.entero(c.alAnio) }}</b>: un
+                {{ f.entero(c.caida) }}% menos.
+              </p>
+            }
+            <svg class="curva" viewBox="0 0 300 100" role="img" [attr.aria-label]="en() ? 'Production curve of a typical ' + c.anio + ' well over its first two years' : 'Curva de producción de un pozo típico de ' + c.anio + ' en sus primeros dos años'">
               <line x1="0" x2="300" y1="97" y2="97" class="eje" />
               <path [attr.d]="c.path" class="linea" />
               <line x1="143.5" x2="143.5" y1="4" y2="97" class="marca" />
-              <text x="148" y="14" class="texto">al año</text>
+              <text x="148" y="14" class="texto">{{ en() ? '1 year' : 'al año' }}</text>
             </svg>
           }
         }
         @case (4) {
-          @if (renovacion(); as r) {
-            <p>
-              Como cada pozo decae, para que la producción crezca hay que conectar pozos nuevos todo el tiempo. Hoy,
-              <b>{{ f.entero(r.porcentaje) }}% del petróleo</b> sale de pozos que tienen menos de dos años.
-            </p>
+          @if (en()) {
+            @if (renovacion(); as r) {
+              <p>
+                Because every well declines, production can only grow if new wells are connected all the time. Today,
+                <b>{{ f.entero(r.porcentaje) }}% of the oil</b> comes from wells less than two years old.
+              </p>
+            }
+            <p>On the map, the timeline runs from 2011: watch the basin light up.</p>
+          } @else {
+            @if (renovacion(); as r) {
+              <p>
+                Como cada pozo decae, para que la producción crezca hay que conectar pozos nuevos todo el tiempo. Hoy,
+                <b>{{ f.entero(r.porcentaje) }}% del petróleo</b> sale de pozos que tienen menos de dos años.
+              </p>
+            }
+            <p>En el mapa, la línea de tiempo corre desde 2011: mirá cómo se enciende la cuenca.</p>
           }
-          <p>En el mapa, la línea de tiempo corre desde 2011: mirá cómo se enciende la cuenca.</p>
         }
         @case (5) {
-          <p>Con esto alcanza para recorrer los datos por tu cuenta:</p>
-          <ul class="destinos">
-            <li><a routerLink="/produccion">Producción</a>: cuánto produce cada pozo, mes a mes desde 2011.</li>
-            <li><a routerLink="/subsuelo">Subsuelo</a>: los {{ f.entero(trayectorias.datos()?.cantidad ?? 0) }} pozos bajo tierra.</li>
-            <li><a routerLink="/rendimiento">Rendimiento</a>: por qué cada pozo nuevo rinde más.</li>
-          </ul>
+          @if (en()) {
+            <p>That is all you need to explore the data on your own:</p>
+            <ul class="destinos">
+              <li><a [routerLink]="ruta('produccion')">Production</a>: how much each well produces, month by month since 2011.</li>
+              <li><a [routerLink]="ruta('subsuelo')">Underground</a>: the {{ f.entero(trayectorias.datos()?.cantidad ?? 0) }} wells below ground.</li>
+              <li><a [routerLink]="ruta('rendimiento')">Performance</a>: why every new well produces more.</li>
+            </ul>
+          } @else {
+            <p>Con esto alcanza para recorrer los datos por tu cuenta:</p>
+            <ul class="destinos">
+              <li><a [routerLink]="ruta('produccion')">Producción</a>: cuánto produce cada pozo, mes a mes desde 2011.</li>
+              <li><a [routerLink]="ruta('subsuelo')">Subsuelo</a>: los {{ f.entero(trayectorias.datos()?.cantidad ?? 0) }} pozos bajo tierra.</li>
+              <li><a [routerLink]="ruta('rendimiento')">Rendimiento</a>: por qué cada pozo nuevo rinde más.</li>
+            </ul>
+          }
         }
       }
 
-      <nav class="botones" aria-label="Pasos del recorrido">
-        <button type="button" class="secundario" (click)="ir(paso() - 1)" [disabled]="paso() === 0">Anterior</button>
+      <nav class="botones" [attr.aria-label]="en() ? 'Tour steps' : 'Pasos del recorrido'">
+        <button type="button" class="secundario" (click)="ir(paso() - 1)" [disabled]="paso() === 0">{{ en() ? 'Back' : 'Anterior' }}</button>
         <span class="puntos" aria-hidden="true">
           @for (p of pasos; track p.titulo; let i = $index) {
             <i [class.activo]="i === paso()"></i>
           }
         </span>
         @if (paso() < pasos.length - 1) {
-          <button type="button" class="primario" (click)="ir(paso() + 1)">Siguiente</button>
+          <button type="button" class="primario" (click)="ir(paso() + 1)">{{ en() ? 'Next' : 'Siguiente' }}</button>
         } @else {
-          <a class="primario" routerLink="/produccion">Ir al mapa</a>
+          <a class="primario" [routerLink]="ruta('produccion')">{{ en() ? 'Go to the map' : 'Ir al mapa' }}</a>
         }
       </nav>
       @if (paso() < pasos.length - 1) {
-        <a class="saltar" routerLink="/produccion">Saltar e ir al mapa</a>
+        <a class="saltar" [routerLink]="ruta('produccion')">{{ en() ? 'Skip to the map' : 'Saltar e ir al mapa' }}</a>
       }
     </section>
 
-    <p class="fuente">Datos públicos: {{ d.meta.fuente }}.<span class="solo-amplio"> Trayectorias con profundidad reconstruida y exagerada 4 veces.</span> · Proyecto independiente, hecho por <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
+    <p class="fuente">{{ en() ? 'Public data:' : 'Datos públicos:' }} {{ fuente(d.meta.fuente) }}.<span class="solo-amplio"> {{ en() ? 'Well paths with reconstructed depth, exaggerated 4 times.' : 'Trayectorias con profundidad reconstruida y exagerada 4 veces.' }}</span> · {{ en() ? 'Independent project by' : 'Proyecto independiente, hecho por' }} <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
   </main>
 } @else {
-  <main class="estado"><p class="estado-titulo">Cargando…</p></main>
+  <main class="estado"><p class="estado-titulo">{{ en() ? 'Loading…' : 'Cargando…' }}</p></main>
 }

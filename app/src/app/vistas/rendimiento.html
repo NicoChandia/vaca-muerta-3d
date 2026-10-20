@@ -2,7 +2,7 @@
   <div class="columna" #columna>
     @switch (servicio.estado()) {
       @case ('cargando') {
-        <p class="cargando">Calculando…</p>
+        <p class="cargando">{{ en() ? 'Calculating…' : 'Calculando…' }}</p>
       }
       @case ('error') {
         <p class="cargando">{{ servicio.error() }}</p>
@@ -10,44 +10,73 @@
       @default {
         @if (r(); as r) {
           <header class="encabezado">
-            <h1>¿Los pozos nuevos rinden más?</h1>
-            <div class="grupo" role="group" aria-label="Qué analizar">
-              <button type="button" [attr.aria-pressed]="fluido() === 'petroleo'" (click)="fluido.set('petroleo')">Pozos de petróleo</button>
-              <button type="button" [attr.aria-pressed]="fluido() === 'gas'" (click)="fluido.set('gas')">Pozos de gas</button>
+            <h1>{{ en() ? 'Do new wells produce more?' : '¿Los pozos nuevos rinden más?' }}</h1>
+            <div class="grupo" role="group" [attr.aria-label]="en() ? 'What to analyze' : 'Qué analizar'">
+              <button type="button" [attr.aria-pressed]="fluido() === 'petroleo'" (click)="fluido.set('petroleo')">{{ en() ? 'Oil wells' : 'Pozos de petróleo' }}</button>
+              <button type="button" [attr.aria-pressed]="fluido() === 'gas'" (click)="fluido.set('gas')">{{ en() ? 'Gas wells' : 'Pozos de gas' }}</button>
             </div>
             @if (titular(); as t) {
-              <p class="titular">
-                Un pozo {{ t.tipo }} típico que arrancó en {{ t.ultimo.anio }} produjo
-                <b>{{ primerAnio(t.ultimo.mediana) }}</b> en su primer año. Uno de {{ t.primero.anio }}, <b>{{ primerAnio(t.primero.mediana) }}</b>:
-                @if (t.veces >= 1.15) {
-                  los nuevos rinden {{ f.decimal(t.veces) }} veces más.
-                } @else if (t.veces <= 0.87) {
-                  los nuevos rinden menos.
-                } @else {
-                  casi lo mismo.
-                }
-              </p>
+              @if (en()) {
+                <p class="titular">
+                  A typical {{ t.tipo }} well that started in {{ t.ultimo.anio }} produced
+                  <b>{{ primerAnio(t.ultimo.mediana) }}</b> in its first year. One from {{ t.primero.anio }}, <b>{{ primerAnio(t.primero.mediana) }}</b>:
+                  @if (t.veces >= 1.15) {
+                    new wells produce {{ f.decimal(t.veces) }} times more.
+                  } @else if (t.veces <= 0.87) {
+                    new wells produce less.
+                  } @else {
+                    about the same.
+                  }
+                </p>
+              } @else {
+                <p class="titular">
+                  Un pozo {{ t.tipo }} típico que arrancó en {{ t.ultimo.anio }} produjo
+                  <b>{{ primerAnio(t.ultimo.mediana) }}</b> en su primer año. Uno de {{ t.primero.anio }}, <b>{{ primerAnio(t.primero.mediana) }}</b>:
+                  @if (t.veces >= 1.15) {
+                    los nuevos rinden {{ f.decimal(t.veces) }} veces más.
+                  } @else if (t.veces <= 0.87) {
+                    los nuevos rinden menos.
+                  } @else {
+                    casi lo mismo.
+                  }
+                </p>
+              }
             }
             @if (titular()?.horizontal; as h) {
-              <p class="contexto">
-                Buena parte del salto se explica por el tipo de pozo: hasta {{ h.anio - 1 }} la mayoría eran verticales y
-                desde {{ h.anio }}, horizontales, con ramas de kilómetros dentro de la roca. Comparado solo con los de
-                {{ h.anio }}, un pozo de {{ titular()!.ultimo.anio }} rinde {{ f.decimal(titular()!.vecesHorizontal) }} veces más.
+              @if (en()) {
+                <p class="contexto">
+                  Much of the jump comes from the type of well: until {{ h.anio - 1 }} most were vertical, and from
+                  {{ h.anio }} on, horizontal, with laterals kilometers long inside the rock. Compared only with {{ h.anio }}
+                  wells, a {{ titular()!.ultimo.anio }} well produces {{ f.decimal(titular()!.vecesHorizontal) }} times more.
+                </p>
+              } @else {
+                <p class="contexto">
+                  Buena parte del salto se explica por el tipo de pozo: hasta {{ h.anio - 1 }} la mayoría eran verticales y
+                  desde {{ h.anio }}, horizontales, con ramas de kilómetros dentro de la roca. Comparado solo con los de
+                  {{ h.anio }}, un pozo de {{ titular()!.ultimo.anio }} rinde {{ f.decimal(titular()!.vecesHorizontal) }} veces más.
+                </p>
+              }
+            }
+            @if (en()) {
+              <p class="metodo">
+                "Typical" is the median: half of the wells produced more and the other half less. The analysis covers
+                {{ f.entero(r.pozosAnalizados) }} wells with at least one year of data.
+              </p>
+            } @else {
+              <p class="metodo">
+                "Típico" es la mediana: la mitad de los pozos produjo más y la otra mitad menos. Se analizan
+                {{ f.entero(r.pozosAnalizados) }} pozos con al menos un año de datos.
               </p>
             }
-            <p class="metodo">
-              "Típico" es la mediana: la mitad de los pozos produjo más y la otra mitad menos. Se analizan
-              {{ f.entero(r.pozosAnalizados) }} pozos con al menos un año de datos.
-            </p>
           </header>
 
           <section class="bloque" aria-labelledby="t-cohortes">
-            <h2 id="t-cohortes">Producción del primer año, según el año de arranque</h2>
-            <p class="eje">{{ unidadPrimerAnio() }}, por pozo</p>
+            <h2 id="t-cohortes">{{ en() ? 'First-year production, by start year' : 'Producción del primer año, según el año de arranque' }}</h2>
+            <p class="eje">{{ unidadPrimerAnio() }}{{ en() ? ', per well' : ', por pozo' }}</p>
             @if (barras(); as b) {
               <div class="grafico">
                 <svg [attr.viewBox]="'0 0 ' + ancho() + ' ' + alto" [attr.width]="ancho()" [attr.height]="alto" role="img"
-                  aria-label="Barras con la producción mediana del primer año por pozo para cada año de arranque."
+                  [attr.aria-label]="en() ? 'Bars with the median first-year production per well for each start year.' : 'Barras con la producción mediana del primer año por pozo para cada año de arranque.'"
                   (pointerleave)="hover.set(null)">
                   @for (t of b.ticks; track t.v) {
                     <line [attr.x1]="margen.izq" [attr.x2]="ancho() - margen.der" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
@@ -73,24 +102,24 @@
                   }
                 }
               </div>
-              <p class="nota">La barra es la mediana; la línea fina va del cuartil 1 al 3, donde está la mitad de los pozos.</p>
+              <p class="nota">{{ en() ? 'The bar is the median; the thin line runs from the 1st to the 3rd quartile, where half of the wells are.' : 'La barra es la mediana; la línea fina va del cuartil 1 al 3, donde está la mitad de los pozos.' }}</p>
             }
           </section>
 
           <section class="bloque" aria-labelledby="t-curvas">
-            <h2 id="t-curvas">Cómo cae la producción desde el arranque</h2>
-            <p class="eje">{{ unidadCaudal() }}, pozo típico</p>
+            <h2 id="t-curvas">{{ en() ? 'How production declines after start-up' : 'Cómo cae la producción desde el arranque' }}</h2>
+            <p class="eje">{{ unidadCaudal() }}{{ en() ? ', typical well' : ', pozo típico' }}</p>
             @if (curvas(); as c) {
               <div class="grafico">
                 <svg [attr.viewBox]="'0 0 ' + ancho() + ' ' + altoCurva" [attr.width]="ancho()" [attr.height]="altoCurva" role="img"
-                  aria-label="Curvas de producción por mes desde el arranque, para pozos de distintos años."
+                  [attr.aria-label]="en() ? 'Production curves by month since start-up, for wells from different years.' : 'Curvas de producción por mes desde el arranque, para pozos de distintos años.'"
                   (pointermove)="moverCurva($event)" (pointerleave)="salirCurva()">
                   @for (t of c.ticksY; track t.v) {
                     <line [attr.x1]="margen.izq" [attr.x2]="c.derecha" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
                     <text [attr.x]="margen.izq - 8" [attr.y]="t.y + 4" class="tick" text-anchor="end">{{ t.texto }}</text>
                   }
                   @for (t of c.ticksX; track t.k) {
-                    <text [attr.x]="t.x" [attr.y]="c.base + 18" class="tick" text-anchor="middle">{{ t.k === 0 ? 'Mes 1' : t.k + 1 }}</text>
+                    <text [attr.x]="t.x" [attr.y]="c.base + 18" class="tick" text-anchor="middle">{{ t.k === 0 ? (en() ? 'Month 1' : 'Mes 1') : t.k + 1 }}</text>
                   }
                   <line [attr.x1]="margen.izq" [attr.x2]="c.derecha" [attr.y1]="c.base" [attr.y2]="c.base" class="eje-base" />
                   @if (mesCurva() !== null) {
@@ -117,15 +146,29 @@
               </div>
               <p class="leyenda">
                 @for (l of c.lineas; track l.anio) {
-                  <span><i [style.background]="l.color" aria-hidden="true"></i>Arrancaron en {{ l.anio }}</span>
+                  <span><i [style.background]="l.color" aria-hidden="true"></i>{{ en() ? 'Started in' : 'Arrancaron en' }} {{ l.anio }}</span>
                 }
               </p>
             }
           </section>
 
           <section class="bloque" aria-labelledby="t-pozos">
-            <h2 id="t-pozos">Pozos cada vez más largos</h2>
+            <h2 id="t-pozos">{{ en() ? 'Ever longer wells' : 'Pozos cada vez más largos' }}</h2>
             @if (cambioPozos(); as c) {
+              @if (en()) {
+                <p class="bajada">
+                  The typical horizontal lateral went from {{ f.entero(c.a0.rama!) }} m in {{ c.a0.anio }} to
+                  {{ f.entero(c.a1.rama!) }} m in {{ c.a1.anio }}, {{ f.decimal(c.cambioRama) }} times longer.
+                  @if (c.diasParecidos) {
+                    Drilling time did not grow at the same rate: it ranged from {{ f.entero(c.diasMin) }} to
+                    {{ f.entero(c.diasMax) }} days depending on the year, and in {{ c.a1.anio }} it was {{ f.entero(c.a1.dias!) }},
+                    about the same as in {{ c.a0.anio }}.
+                  } @else {
+                    Drilling time went from {{ f.entero(c.a0.dias!) }} to {{ f.entero(c.a1.dias!) }} days.
+                  }
+                  More meters of rock in contact with the well is one of the reasons each well produces more.
+                </p>
+              } @else {
               <p class="bajada">
                 La rama horizontal típica pasó de {{ f.entero(c.a0.rama!) }} m en {{ c.a0.anio }} a
                 {{ f.entero(c.a1.rama!) }} m en {{ c.a1.anio }}, {{ f.decimal(c.cambioRama) }} veces más larga.
@@ -138,14 +181,15 @@
                 }
                 Más metros de roca en contacto con el pozo es una de las razones por las que cada pozo rinde más.
               </p>
+              }
             }
             <div class="mini">
               @for (serie of ['rama', 'dias']; track serie) {
                 @if (mini($any(serie)); as g) {
                   <figure class="grafico">
-                    <figcaption>{{ serie === 'rama' ? 'Largo de la rama horizontal, metros' : 'Días de perforación' }}</figcaption>
+                    <figcaption>{{ serie === 'rama' ? (en() ? 'Horizontal lateral length, meters' : 'Largo de la rama horizontal, metros') : (en() ? 'Drilling days' : 'Días de perforación') }}</figcaption>
                     <svg [attr.viewBox]="'0 0 ' + anchoMini() + ' ' + altoMini" [attr.width]="anchoMini()" [attr.height]="altoMini" role="img"
-                      [attr.aria-label]="serie === 'rama' ? 'Barras con el largo típico de la rama horizontal por año' : 'Barras con los días típicos de perforación por año'"
+                      [attr.aria-label]="serie === 'rama' ? (en() ? 'Bars with the typical horizontal lateral length per year' : 'Barras con el largo típico de la rama horizontal por año') : (en() ? 'Bars with the typical drilling days per year' : 'Barras con los días típicos de perforación por año')"
                       (pointerleave)="hoverMini.set(null)">
                       @for (t of g.ticks; track t.v) {
                         <line [attr.x1]="g.izq" [attr.x2]="g.der" [attr.y1]="t.y" [attr.y2]="t.y" class="grilla" />
@@ -173,60 +217,76 @@
                 }
               }
             </div>
+            @if (en()) {
+              <p class="nota">
+                Horizontal wells, by the year drilling started. Days are calendar days between the reported start and end:
+                several wells are drilled in stages on the same pad, so they are not the rig’s actual working time. The
+                lateral comes from the published well paths.
+              </p>
+            } @else {
             <p class="nota">
               Pozos horizontales, según el año en que empezó su perforación. Los días son de calendario entre el inicio y el
               fin declarados: en una misma locación se perforan varios pozos por etapas, así que no equivalen al tiempo real del
               equipo. La rama sale de las trayectorias publicadas.
             </p>
+            }
           </section>
 
           <section class="bloque" aria-labelledby="t-empresas">
-            <h2 id="t-empresas">Por empresa, pozos que arrancaron entre {{ r.aniosEmpresas[0] }} y {{ r.aniosEmpresas[1] }}</h2>
-            <p class="eje">{{ unidadPrimerAnio() }}, pozo típico</p>
+            <h2 id="t-empresas">{{ en() ? 'By company, wells that started between ' + r.aniosEmpresas[0] + ' and ' + r.aniosEmpresas[1] : 'Por empresa, pozos que arrancaron entre ' + r.aniosEmpresas[0] + ' y ' + r.aniosEmpresas[1] }}</h2>
+            <p class="eje">{{ unidadPrimerAnio() }}{{ en() ? ', typical well' : ', pozo típico' }}</p>
             @if (empresas().length) {
               <ol class="empresas">
                 @for (e of empresas(); track e.empresa) {
                   <li>
                     <span class="fila">
-                      <span>{{ e.nombre }}</span>
+                      <span>{{ nombreEmpresa(e.nombre) }}</span>
                       <span class="valor">{{ primerAnio(e.mediana) }}</span>
                     </span>
                     <span class="barra-h" aria-hidden="true"><span [style.width.%]="e.ancho" [style.background]="e.color"></span></span>
-                    <span class="nota">{{ f.entero(e.n) }} pozos</span>
+                    <span class="nota">{{ f.entero(e.n) }} {{ en() ? 'wells' : 'pozos' }}</span>
                   </li>
                 }
               </ol>
             } @else {
-              <p class="nota">No hay empresas con suficientes pozos en ese período.</p>
+              <p class="nota">{{ en() ? 'No company has enough wells in that period.' : 'No hay empresas con suficientes pozos en ese período.' }}</p>
             }
           </section>
 
           <section class="bloque" aria-labelledby="t-destacados">
-            <h2 id="t-destacados">Los pozos que más produjeron en su primer año</h2>
+            <h2 id="t-destacados">{{ en() ? 'The wells that produced the most in their first year' : 'Los pozos que más produjeron en su primer año' }}</h2>
             <ol class="destacados">
               @for (p of r.destacados; track p.id; let i = $index) {
                 <li>
-                  <a [routerLink]="['/produccion']" [queryParams]="{ pozo: p.id }">
+                  <a [routerLink]="ruta('produccion')" [queryParams]="{ pozo: p.id }">
                     <span class="puesto">{{ i + 1 }}</span>
                     <span class="nombre">
                       <strong>{{ p.nombre }}</strong>
-                      <span>{{ p.empresa }}, {{ p.area }}, arrancó en {{ p.anio }}</span>
+                      <span>{{ nombreEmpresa(p.empresa) }}, {{ p.area }}, {{ en() ? 'started in' : 'arrancó en' }} {{ p.anio }}</span>
                     </span>
                     <span class="valor">{{ primerAnio(p.primerAnio) }}</span>
                   </a>
                 </li>
               }
             </ol>
-            <p class="nota">Tocá un pozo para verlo en el mapa.</p>
+            <p class="nota">{{ en() ? 'Tap a well to see it on the map.' : 'Tocá un pozo para verlo en el mapa.' }}</p>
           </section>
 
           <footer class="pie">
-            <p>
-              Producción del primer año: suma de los primeros doce meses desde que el pozo empezó a producir. Los pozos de
-              petróleo y de gas se separan según el tipo declarado. No se ajusta por largo de rama ni por cantidad de
-              etapas de fractura, que también explican parte de la diferencia.
-            </p>
-            <p>Datos públicos: {{ servicio.datos()?.meta?.fuente }} · Proyecto independiente, hecho por <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
+            @if (en()) {
+              <p>
+                First-year production: total of the first twelve months after the well started producing. Oil and gas wells
+                are separated by their reported type. There is no adjustment for lateral length or number of fracture stages,
+                which also explain part of the difference.
+              </p>
+            } @else {
+              <p>
+                Producción del primer año: suma de los primeros doce meses desde que el pozo empezó a producir. Los pozos de
+                petróleo y de gas se separan según el tipo declarado. No se ajusta por largo de rama ni por cantidad de
+                etapas de fractura, que también explican parte de la diferencia.
+              </p>
+            }
+            <p>{{ en() ? 'Public data:' : 'Datos públicos:' }} {{ fuente(servicio.datos()?.meta?.fuente ?? '') }} · {{ en() ? 'Independent project by' : 'Proyecto independiente, hecho por' }} <a class="autor" href="https://www.linkedin.com/in/nicolas-chandia" target="_blank" rel="noopener">Nicolás Chandía</a></p>
           </footer>
         }
       }

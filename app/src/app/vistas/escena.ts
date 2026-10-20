@@ -1,6 +1,7 @@
 import { Component, OnDestroy, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatosService, MEDIDAS, MEDIDA_INFO, Medida, formato, nombreMes } from '../datos';
+import { DatosService, MEDIDAS, MEDIDA_INFO, Medida, formato, nombreEmpresa, nombreMes, textoFuente, textoMomento } from '../datos';
+import { enIngles, ruta, tr } from '../idioma';
 import { ColorPor, Mapa3d, Modo, Vista } from '../mapa-3d';
 import { Estratos } from '../estratos';
 import { FichaPozo } from '../ficha-pozo';
@@ -34,6 +35,11 @@ export class Escena implements OnDestroy {
   protected readonly trayectorias = inject(TrayectoriasService);
   protected readonly datos = this.servicio.datos;
   protected readonly f = formato;
+  protected readonly en = enIngles;
+  protected readonly ruta = ruta;
+  protected readonly nombreEmpresa = nombreEmpresa;
+  protected readonly momentoTexto = textoMomento;
+  protected readonly fuente = textoFuente;
 
   protected readonly vista = computed<Vista>(() => (this.seccion() === 'subsuelo' ? 'subsuelo' : 'superficie'));
   protected readonly mes = signal(0);
@@ -142,7 +148,7 @@ export class Escena implements OnDestroy {
       .map((nombre, i) => ({ nombre, porcentaje: (series[i][m] / total) * 100 }))
       .filter((p) => p.porcentaje > 0)
       .sort((a, b) => b.porcentaje - a.porcentaje)
-      .map((p) => ({ ...p, texto: p.porcentaje < 0.1 ? 'menos de 0,1%' : `${formato.decimal(p.porcentaje)}%` }));
+      .map((p) => ({ ...p, texto: p.porcentaje < 0.1 ? tr(`menos de ${formato.decimal(0.1)}%`, `under ${formato.decimal(0.1)}%`) : `${formato.decimal(p.porcentaje)}%` }));
   });
 
   /** Ranking de empresas del mes para la medida elegida. */
@@ -176,13 +182,20 @@ export class Escena implements OnDestroy {
   protected readonly descripcionMapa = computed(() => {
     const d = this.datos();
     const i = this.indicadores();
-    if (!d || !i) return 'Mapa 3D de pozos';
-    if (this.vista() === 'subsuelo') return 'Vista 3D bajo tierra con el recorrido de los pozos de Vaca Muerta.';
+    if (!d || !i) return tr('Mapa 3D de pozos', '3D map of wells');
+    if (this.vista() === 'subsuelo') {
+      return tr(
+        'Vista 3D bajo tierra con el recorrido de los pozos de Vaca Muerta.',
+        '3D underground view with the paths of the Vaca Muerta wells.',
+      );
+    }
     const t = d.totales.total;
-    return (
-      `Mapa 3D de pozos de Vaca Muerta en ${this.textoMes()}: ${formato.entero(i.activos)} pozos produciendo, ` +
-      `${formato.entero(t.petroleo[this.mes()])} barriles de petróleo por día y ` +
-      `${formato.gasMillones(t.gas[this.mes()])} millones de metros cúbicos de gas por día.`
+    const pozos = formato.entero(i.activos);
+    const pet = formato.entero(t.petroleo[this.mes()]);
+    const gas = formato.gasMillones(t.gas[this.mes()]);
+    return tr(
+      `Mapa 3D de pozos de Vaca Muerta en ${this.textoMes()}: ${pozos} pozos produciendo, ${pet} barriles de petróleo por día y ${gas} millones de metros cúbicos de gas por día.`,
+      `3D map of Vaca Muerta wells in ${this.textoMes()}: ${pozos} producing wells, ${pet} barrels of oil per day and ${gas} million cubic meters of gas per day.`,
     );
   });
 

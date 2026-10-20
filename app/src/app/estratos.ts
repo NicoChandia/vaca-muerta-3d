@@ -9,7 +9,8 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Datos, MEDIDA_INFO, Medida, Momento, nombreMes } from './datos';
+import { Datos, MEDIDA_INFO, Medida, Momento, nombreMes, textoMomento } from './datos';
+import { tr } from './idioma';
 
 interface Capa {
   empresa: number;
@@ -34,7 +35,7 @@ const MARGEN = { izq: 16, der: 16, arriba: 8, abajo: 22 };
         [attr.viewBox]="'0 0 ' + ancho() + ' ' + alto"
         role="slider"
         tabindex="0"
-        aria-label="Mes del mapa"
+        [attr.aria-label]="etiqueta()"
         [attr.aria-valuemin]="0"
         [attr.aria-valuemax]="datos().meta.meses.length - 1"
         [attr.aria-valuenow]="mes()"
@@ -201,10 +202,11 @@ export class Estratos implements OnDestroy {
     return marcas;
   });
 
+  protected readonly etiqueta = computed(() => tr('Mes del mapa', 'Map month'));
   protected readonly marcasMomento = computed(() => {
     const meses = this.datos().meta.meses;
     return this.momentos()
-      .map((m) => ({ ...m, indice: meses.indexOf(m.mes), fecha: nombreMes(m.mes) }))
+      .map((m) => ({ ...m, ...textoMomento(m), indice: meses.indexOf(m.mes), fecha: nombreMes(m.mes) }))
       .filter((m) => m.indice >= 0);
   });
 

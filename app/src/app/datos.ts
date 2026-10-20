@@ -1,5 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { bajarBinario } from './binario';
+import { idioma, tr } from './idioma';
 
 /** Lo que genera pipeline/formato.py en public/data/meta.json */
 export interface Meta {
@@ -69,6 +70,14 @@ export interface Momento {
   mes: string;
   titulo: string;
   texto: string;
+  /** Versión en inglés (opcional). */
+  titulo_en?: string;
+  texto_en?: string;
+}
+
+/** Título y texto de un momento clave en el idioma actual. */
+export function textoMomento(m: Momento): { titulo: string; texto: string } {
+  return idioma() === 'en' && m.titulo_en ? { titulo: m.titulo_en, texto: m.texto_en ?? m.texto } : { titulo: m.titulo, texto: m.texto };
 }
 
 const RUTA = 'data/';
@@ -210,65 +219,130 @@ export function produce(d: Datos, pozo: number, mes: number): boolean {
   return d.series.petroleo[i] + d.series.gas[i] > 0;
 }
 
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MESES: Record<'es' | 'en', string[]> = {
+  es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+};
 
 export function nombreMes(aaaamm: string, corto = false): string {
   const [a, m] = aaaamm.split('-').map(Number);
-  const nombre = MESES[m - 1];
+  const nombre = MESES[idioma()][m - 1];
   return corto ? `${nombre.slice(0, 3)} ${a}` : `${nombre} ${a}`;
 }
 
 export function fechaLarga(aaaammdd: string): string {
-  if (!aaaammdd) return 'Sin dato';
+  if (!aaaammdd) return tr('Sin dato', 'No data');
   const [a, m, d] = aaaammdd.split('-').map(Number);
-  return `${d} de ${MESES[m - 1]} de ${a}`;
+  return idioma() === 'en' ? `${MESES.en[m - 1]} ${d}, ${a}` : `${d} de ${MESES.es[m - 1]} de ${a}`;
 }
 
-const fmt0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
-const fmt1 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const FORMATOS = {
+  es: {
+    f0: new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }),
+    f1: new Intl.NumberFormat('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+  },
+  en: {
+    f0: new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }),
+    f1: new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+  },
+};
+const fmt0 = () => FORMATOS[idioma()].f0;
+const fmt1 = () => FORMATOS[idioma()].f1;
 
+/** Números con el formato del idioma: 669.802 en español, 669,802 en inglés. */
 export const formato = {
-  entero: (v: number) => fmt0.format(v),
-  decimal: (v: number) => fmt1.format(v),
+  entero: (v: number) => fmt0().format(v),
+  decimal: (v: number) => fmt1().format(v),
   /** Gas: miles de m3/d -> millones de m3/d */
-  gasMillones: (milesM3: number) => fmt1.format(milesM3 / 1000),
-  variacion: (v: number) => `${v >= 0 ? '+' : '−'}${fmt1.format(Math.abs(v))}%`,
+  gasMillones: (milesM3: number) => fmt1().format(milesM3 / 1000),
+  variacion: (v: number) => `${v >= 0 ? '+' : '−'}${fmt1().format(Math.abs(v))}%`,
 };
 
-/** Textos y formatos por medida, para no repetir condicionales en las vistas. */
-export const MEDIDA_INFO: Record<
-  Medida,
-  { nombre: string; total: (v: number) => string; unidadTotal: string; corto: (v: number) => string; pozo: (v: number) => string }
-> = {
-  petroleo: {
-    nombre: 'Petróleo',
-    total: (v) => formato.entero(v),
-    unidadTotal: 'barriles por día',
-    corto: (v) => `${formato.entero(v)} bbl/d`,
-    pozo: (v) => `${formato.entero(v)} bbl/d`,
+type InfoMedida = { nombre: string; total: (v: number) => string; unidadTotal: string; corto: (v: number) => string; pozo: (v: number) => string };
+
+const INFO: Record<'es' | 'en', Record<Medida, InfoMedida>> = {
+  es: {
+    petroleo: {
+      nombre: 'Petróleo',
+      total: (v) => formato.entero(v),
+      unidadTotal: 'barriles por día',
+      corto: (v) => `${formato.entero(v)} bbl/d`,
+      pozo: (v) => `${formato.entero(v)} bbl/d`,
+    },
+    gas: {
+      nombre: 'Gas',
+      total: (v) => formato.gasMillones(v),
+      unidadTotal: 'millones de m³ por día',
+      corto: (v) => `${formato.gasMillones(v)} MMm³/d`,
+      pozo: (v) => `${formato.decimal(v)} mil m³/d`,
+    },
+    agua: {
+      nombre: 'Agua',
+      total: (v) => formato.entero(v),
+      unidadTotal: 'm³ por día',
+      corto: (v) => `${formato.entero(v)} m³/d`,
+      pozo: (v) => `${formato.entero(v)} m³/d`,
+    },
   },
-  gas: {
-    nombre: 'Gas',
-    total: (v) => formato.gasMillones(v),
-    unidadTotal: 'millones de m³ por día',
-    corto: (v) => `${formato.gasMillones(v)} MMm³/d`,
-    pozo: (v) => `${formato.decimal(v)} mil m³/d`,
-  },
-  agua: {
-    nombre: 'Agua',
-    total: (v) => formato.entero(v),
-    unidadTotal: 'm³ por día',
-    corto: (v) => `${formato.entero(v)} m³/d`,
-    pozo: (v) => `${formato.entero(v)} m³/d`,
+  en: {
+    petroleo: {
+      nombre: 'Oil',
+      total: (v) => formato.entero(v),
+      unidadTotal: 'barrels per day',
+      corto: (v) => `${formato.entero(v)} bbl/d`,
+      pozo: (v) => `${formato.entero(v)} bbl/d`,
+    },
+    gas: {
+      nombre: 'Gas',
+      total: (v) => formato.gasMillones(v),
+      unidadTotal: 'million m³ per day',
+      corto: (v) => `${formato.gasMillones(v)} MMm³/d`,
+      pozo: (v) => `${formato.decimal(v)} thousand m³/d`,
+    },
+    agua: {
+      nombre: 'Water',
+      total: (v) => formato.entero(v),
+      unidadTotal: 'm³ per day',
+      corto: (v) => `${formato.entero(v)} m³/d`,
+      pozo: (v) => `${formato.entero(v)} m³/d`,
+    },
   },
 };
 
+/** Textos y formatos por medida, en el idioma actual. */
+export const MEDIDA_INFO: Record<Medida, InfoMedida> = {
+  get petroleo() { return INFO[idioma()].petroleo; },
+  get gas() { return INFO[idioma()].gas; },
+  get agua() { return INFO[idioma()].agua; },
+};
+
+const ESTADOS_TEXTO: Record<'es' | 'en', Record<Estado, string>> = {
+  es: { activo: 'En producción', parado: 'Parado', abandonado: 'Abandonado', 'sin-dato': 'Sin dato' },
+  en: { activo: 'Producing', parado: 'Shut in', abandonado: 'Abandoned', 'sin-dato': 'No data' },
+};
 export const ESTADO_TEXTO: Record<Estado, string> = {
-  activo: 'En producción',
-  parado: 'Parado',
-  abandonado: 'Abandonado',
-  'sin-dato': 'Sin dato',
+  get activo() { return ESTADOS_TEXTO[idioma()].activo; },
+  get parado() { return ESTADOS_TEXTO[idioma()].parado; },
+  get abandonado() { return ESTADOS_TEXTO[idioma()].abandonado; },
+  get 'sin-dato'() { return ESTADOS_TEXTO[idioma()]['sin-dato']; },
 };
+
+/** Nombre de empresa para mostrar: "Otras" agrupa a las chicas. */
+export function nombreEmpresa(nombre: string | undefined): string {
+  if (!nombre) return '';
+  return nombre === 'Otras' ? tr('Otras', 'Others') : nombre;
+}
+
+/** La fuente de los datos, para el pie. */
+export function textoFuente(fuente: string): string {
+  return idioma() === 'en' ? 'Argentina’s Energy Secretariat, Capítulo IV dataset (datos.gob.ar)' : fuente;
+}
+
+/** Nombre de área para mostrar. */
+export function nombreArea(nombre: string | undefined): string {
+  if (!nombre || nombre === 'Sin área') return tr('Sin área', 'No area');
+  return nombre;
+}
 
 export function hexARgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);

@@ -2,41 +2,57 @@
   {
     "mes": "2011-05",
     "titulo": "Primer anuncio de shale oil",
-    "texto": "YPF anuncia el descubrimiento de petróleo no convencional en Vaca Muerta, en el área Loma La Lata."
+    "texto": "YPF anuncia el descubrimiento de petróleo no convencional en Vaca Muerta, en el área Loma La Lata.",
+    "titulo_en": "First shale oil announcement",
+    "texto_en": "YPF announces the discovery of unconventional oil in Vaca Muerta, in the Loma La Lata area."
   },
   {
     "mes": "2012-05",
     "titulo": "El Estado toma el control de YPF",
-    "texto": "La ley 26.741 declara de utilidad pública el 51% de las acciones de YPF."
+    "texto": "La ley 26.741 declara de utilidad pública el 51% de las acciones de YPF.",
+    "titulo_en": "The State takes control of YPF",
+    "texto_en": "Law 26,741 declares 51% of YPF's shares to be of public interest, subject to expropriation."
   },
   {
     "mes": "2013-07",
     "titulo": "Acuerdo YPF-Chevron",
-    "texto": "YPF y Chevron firman el acuerdo para desarrollar Loma Campana, el primer proyecto masivo de shale en Vaca Muerta."
+    "texto": "YPF y Chevron firman el acuerdo para desarrollar Loma Campana, el primer proyecto masivo de shale en Vaca Muerta.",
+    "titulo_en": "YPF–Chevron agreement",
+    "texto_en": "YPF and Chevron sign the agreement to develop Loma Campana, the first large-scale shale project in Vaca Muerta."
   },
   {
     "mes": "2017-03",
     "titulo": "Estímulo al gas no convencional",
-    "texto": "La resolución 46/2017 fija un precio garantizado para el gas de nuevos proyectos no convencionales. Detrás llega el despegue de Fortín de Piedra."
+    "texto": "La resolución 46/2017 fija un precio garantizado para el gas de nuevos proyectos no convencionales. Detrás llega el despegue de Fortín de Piedra.",
+    "titulo_en": "Incentive for unconventional gas",
+    "texto_en": "Resolution 46/2017 sets a guaranteed price for gas from new unconventional projects. The take-off of Fortín de Piedra follows."
   },
   {
     "mes": "2019-08",
     "titulo": "Congelamiento de precios",
-    "texto": "El decreto 566/2019 congela el precio del crudo y los combustibles por 90 días."
+    "texto": "El decreto 566/2019 congela el precio del crudo y los combustibles por 90 días.",
+    "titulo_en": "Price freeze",
+    "texto_en": "Decree 566/2019 freezes crude oil and fuel prices for 90 days."
   },
   {
     "mes": "2020-04",
     "titulo": "Pandemia",
-    "texto": "Con la cuarentena y la caída de la demanda, se frena la actividad y la producción baja."
+    "texto": "Con la cuarentena y la caída de la demanda, se frena la actividad y la producción baja.",
+    "titulo_en": "Pandemic",
+    "texto_en": "With the lockdown and falling demand, activity stops and production drops."
   },
   {
     "mes": "2023-07",
     "titulo": "Gasoducto desde Tratayén",
-    "texto": "Se inaugura el primer tramo del gasoducto que lleva gas de Vaca Muerta hacia Buenos Aires."
+    "texto": "Se inaugura el primer tramo del gasoducto que lleva gas de Vaca Muerta hacia Buenos Aires.",
+    "titulo_en": "Pipeline from Tratayén",
+    "texto_en": "The first section of the pipeline carrying Vaca Muerta gas toward Buenos Aires opens."
   },
   {
     "mes": "2024-07",
     "titulo": "Ley Bases y RIGI",
-    "texto": "Se promulga la ley 27.742, que crea un régimen de incentivo para grandes inversiones."
+    "texto": "Se promulga la ley 27.742, que crea un régimen de incentivo para grandes inversiones.",
+    "titulo_en": "Bases Law and RIGI",
+    "texto_en": "Law 27,742 is enacted, creating an incentive regime for large investments."
   }
 ]
