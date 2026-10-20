@@ -1,3 +1,4 @@
+import { bajarBinario } from './binario';
 import { Injectable, signal } from '@angular/core';
 import { Datos } from './datos';
 
@@ -53,8 +54,12 @@ export class TrayectoriasService {
         return;
       }
       const archivo = (await r.json()) as Archivo;
-      const b = await fetch('data/trayectorias.bin');
-      const puntos = new Float32Array(await b.arrayBuffer());
+      const binario = await bajarBinario('data/trayectorias.bin');
+      if (!binario) {
+        this.estado.set('falta');
+        return;
+      }
+      const puntos = new Float32Array(binario);
 
       const porId = new Map(base.pozos.map((p) => [p.id, p.indice]));
       const nombreAIndice = new Map(base.meta.empresas.map((e, i) => [e.nombre, i]));

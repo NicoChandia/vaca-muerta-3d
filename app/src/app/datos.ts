@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { bajarBinario } from './binario';
 
 /** Lo que genera pipeline/formato.py en public/data/meta.json */
 export interface Meta {
@@ -149,12 +150,12 @@ export class DatosService {
   }
 
   private async binario(nombre: string, opcional = false): Promise<Float32Array> {
-    const r = await fetch(RUTA + nombre);
-    if (!r.ok || (r.headers.get('content-type') ?? '').includes('text/html')) {
+    const datos = await bajarBinario(RUTA + nombre);
+    if (!datos) {
       if (opcional) return null as unknown as Float32Array;
       throw new Error(`No encontré ${RUTA}${nombre}. Corré el pipeline para generar los datos.`);
     }
-    return new Float32Array(await r.arrayBuffer());
+    return new Float32Array(datos);
   }
 }
 

@@ -7,6 +7,7 @@ La app lee estos archivos desde app/public/data/:
   oil.bin     -> Float32 little-endian [pozos x meses], petróleo en barriles por día
   gas.bin     -> Float32 little-endian [pozos x meses], gas en miles de m3 por día
   water.bin   -> Float32 little-endian [pozos x meses], agua en m3 por día
+  *.bin.gz    -> las mismas matrices comprimidas con gzip (la app baja estas)
 
 Las matrices se guardan "pozo por pozo": el valor del pozo i en el mes j está en
 la posición i * cantidad_de_meses + j.
@@ -14,6 +15,7 @@ la posición i * cantidad_de_meses + j.
 
 from __future__ import annotations
 
+import gzip
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -129,9 +131,19 @@ def escribir_salida(
     wells = {"columnas": COLUMNAS_POZO, "filas": filas}
     (carpeta / "wells.json").write_text(json.dumps(wells, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
-    petroleo.astype("<f4").tofile(carpeta / "oil.bin")
-    gas.astype("<f4").tofile(carpeta / "gas.bin")
-    agua.astype("<f4").tofile(carpeta / "water.bin")
+    escribir_binario(carpeta / "oil.bin", petroleo)
+    escribir_binario(carpeta / "gas.bin", gas)
+    escribir_binario(carpeta / "water.bin", agua)
+
+
+def escribir_binario(ruta: Path, matriz: np.ndarray) -> None:
+    """Guarda la matriz como Float32 y, al lado, una copia comprimida (.gz) unas 4 veces más
+    liviana, que es la que baja la app. La sin comprimir queda por si el navegador no puede
+    descomprimir."""
+    datos = np.ascontiguousarray(matriz, dtype="<f4").tobytes()
+    ruta.write_bytes(datos)
+    # mtime=0 para que el archivo no cambie si los datos son los mismos (git no lo ve modificado).
+    Path(str(ruta) + ".gz").write_bytes(gzip.compress(datos, compresslevel=9, mtime=0))
 
 
 def _entero_o_nada(v) -> int | None:

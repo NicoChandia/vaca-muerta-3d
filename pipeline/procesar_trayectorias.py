@@ -29,6 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from procesar_capitulo_iv import NOMBRES_CORTOS, empresa_canonica, leer_csv  # noqa: E402
+from formato import escribir_binario  # noqa: E402
 
 PROFUNDIDAD_VALIDA = (800, 5000)  # metros; descarta valores mal cargados
 RAMA_VALIDA = (0, 8000)
@@ -144,7 +145,7 @@ def main() -> None:
         "nota": "Profundidad por punto reconstruida a partir de la profundidad vertical y el largo de rama declarados.",
     }
     (args.datos / "trayectorias.json").write_text(json.dumps(salida, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    np.array(todos, dtype="<f4").tofile(args.datos / "trayectorias.bin")
+    escribir_binario(args.datos / "trayectorias.bin", np.array(todos, dtype="<f4"))
     print(
         f"Listo: {len(filas):,} trayectorias ({descartados:,} descartadas por datos incompletos), {len(todos):,} puntos.\n"
         f"Rama horizontal promedio: {salida['ramaPromedio']:,} m; profundidad promedio: {salida['profundidadPromedio']:,} m."
